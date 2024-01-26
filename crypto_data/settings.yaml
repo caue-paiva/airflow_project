@@ -1,0 +1,30 @@
+# Airflow version to be installed
+airflow_version: "2.8.1"
+
+# Python version for the project
+python_version: "3.11.0"
+
+# Path to a virtual evn
+mode:
+  virtualenv:
+    venv_path: /home/kap/airflow_test/airflow_env
+
+# Airflow connections
+connections:
+    # Example connection
+    # - conn_id: example
+    #   conn_type: http
+    #   host: http://example.com
+    #   port: 80
+    #   login: user
+    #   password: pass
+    #   schema: http
+    #   extra:
+    #      example_extra_field: example-value
+
+# Airflow variables
+variables:
+    # Example variable
+    # - key: example
+    #   value: example-value
+    #   description: example-description
