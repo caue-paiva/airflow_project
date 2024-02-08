@@ -13,6 +13,23 @@ DATASET_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get
 def csv_from_local_files(file_path:str)->pd.DataFrame:
     return pd.read_csv(file_path)
 
+def update_dataset_metadata(crypto_token:str,df: pd.DataFrame )->None:
+    print("updating metadata")
+    with open(DATASET_METADATA_PATH, "r") as f:
+           metadata:list[dict] = json.load(f)
+    
+    num_cols:int = df.shape[0]
+    for in_token in metadata:
+        if in_token.get("crypto_token") == crypto_token:
+            in_token["dataset_exists"] = True
+            in_token["number_of_rows"] = num_cols
+            with open(DATASET_METADATA_PATH, "w") as f:
+               json.dump(metadata,f, indent= 4)
+            return 
+           
+    raise Exception(f"Was not able to find the correct token {crypto_token} in the dataset metadata")
+          
+
 #def csv_from_s3()->pd.DataFrame: 
   #  pass
 
@@ -28,7 +45,7 @@ def crypto_data_etl()->None:
     TOKEN = "BTC"
     etl = CryptoDataETL(crypto_token = TOKEN)
 
-    @task(task_id = "check_dataset_size_rows")
+    @task(task_id = "check_dataset_num_rows")
     def check_dataset_num_rows()->int:
         with open(DATASET_METADATA_PATH, "r") as f:
             metadata:list[dict] = json.load(f)
@@ -48,11 +65,11 @@ def crypto_data_etl()->None:
     @task.branch(task_id = "branch_on_dataset_size")
     def branch_on_dataset_size(dataset_rows: int)-> str:
         if dataset_rows <= 0: 
-            return "create_fill_dataset"
+            return "get_first_dataset"
         else:
             return "fill_existing_dataset"
         
-    @task(task_id = "create_fill_dataset")
+    @task(task_id = "get_first_dataset")
     def get_first_dataset()->pd.DataFrame:
         return etl.create_dataset()
     
@@ -64,6 +81,7 @@ def crypto_data_etl()->None:
     @task(task_id = "write_df_to_file")
     def write_df_to_file(df: pd.DataFrame)->None:
         df.to_csv(CSV_FILE_PATH, index= False)
+        update_dataset_metadata(TOKEN,df)
     
     dataset_rows = check_dataset_num_rows()
     path_branch = branch_on_dataset_size(dataset_rows) # type: ignore

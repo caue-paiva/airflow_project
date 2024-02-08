@@ -20,11 +20,11 @@ def setup_logging():
 #setup_logging()
 
 class CryptoDataETL():
- 
+    #
     SUPPORTED_CRYPTO_TOKENS:set[str] = {"BTC", "ETH", "SOL"}
     MAX_TIME_FRAME_HOURS = float(Variable.get("MAX_TIME_FRAME_HOURS"))   #how far back will data be collected in hours, equivalent to 2,75 years 
     MINS_PER_ROW = int(Variable.get("MINS_PER_ROW")) #how many minutes of data does each row represent
-    TRADE_API_TIME_INTERVAL = 100000 #in ms, the time window for getting aggregated transaction data
+    TRADE_API_TIME_INTERVAL = int(Variable.get("TRADE_TIME_INTERVAL")) #in ms, the time window for getting aggregated transaction data
     DATA_CHUNK_NUM_ROWS = int(Variable.get("DATA_CHUNK_NUM_ROWS")) #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
     MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
     HOURS_BETWEEN_DAILY_UPDATES: int = int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES"))  #how many hours are there to be between each daily uppdate of the dataset by the airflow scheduler
@@ -226,10 +226,10 @@ class CryptoDataETL():
             raise TypeError("in function __get_df_missing_hours: Input dataframe is empty")
         
         num_rows:int = df.shape[0]
-        mins_per_row: int = Variable.get("MINS_PER_ROW")
+        mins_per_row: int = self.MINS_PER_ROW
         total_hours_covered: float = (num_rows * mins_per_row)/60
 
-        return Variable.get("MAX_TIME_FRAME_HOURS") - total_hours_covered
+        return self.MAX_TIME_FRAME_HOURS - total_hours_covered
         
     def create_dataset(self)-> pd.DataFrame:
         """
@@ -274,9 +274,9 @@ class CryptoDataETL():
 
         df_missing_hours:float = self.__get_df_missing_hours(df) #how many hours are missing from the df if compared to the max hours the dataset is supposed to cover
         cur_unix_time:int = self.__seconds_to_unix(time.time())
-
+        print(f" //// df missing hours {df_missing_hours} \n")
         if df_missing_hours <= self.HOURS_BETWEEN_DAILY_UPDATES: #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours = self.HOURS_BETWEEN_DAILY_UPDATES
+            df_missing_hours = self.HOURS_BETWEEN_DAILY_UPDATES #error occours when daily updates hours is larger than max hours, test error only, fix it
     
         num_of_chunks: int = self.__get_num_chunks(df_missing_hours)
         hours_per_chunk:float = df_missing_hours/num_of_chunks
