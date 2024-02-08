@@ -13,7 +13,7 @@ DATASET_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get
 def csv_from_local_files(file_path:str)->pd.DataFrame:
     return pd.read_csv(file_path)
 
-def update_dataset_metadata(crypto_token:str,df: pd.DataFrame )->None:
+def update_dataset_metadata(crypto_token:str,df: pd.DataFrame)->None:
     print("updating metadata")
     with open(DATASET_METADATA_PATH, "r") as f:
            metadata:list[dict] = json.load(f)

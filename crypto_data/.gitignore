@@ -10,4 +10,5 @@ __pycache__/
 .env
 .venv
 .airflowctl
-/home/kap/airflow_test/airflow_env
+s3_handler.py
+airflow_test/airflow_env
