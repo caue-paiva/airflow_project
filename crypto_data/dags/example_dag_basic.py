@@ -72,8 +72,8 @@ def example_dag_basic():
         print(f"Total order value is: {total_order_value:.2f}")
 
     order_data = extract()
-    order_summary = transform(order_data)
-    load(order_summary["total_order_value"])
+    order_summary = transform(order_data) # type: ignore
+    load(order_summary["total_order_value"]) # type: ignore
 
 
 example_dag_basic()

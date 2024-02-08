@@ -1,0 +1,21 @@
+[
+    {
+        "crypto_token": "BTC",
+        "dataset_exists": false,
+        "number_of_rows": 0,
+        "max_capacity": false
+    },
+
+    {
+        "crypto_token": "ETH",
+        "dataset_exists": false,
+        "number_of_rows": 0,
+        "max_capacity": false
+    },
+    {
+        "crypto_token": "SOL",
+        "dataset_exists": false,
+        "number_of_rows": 0,
+        "max_capacity": false
+    }
+]

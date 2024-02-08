@@ -2,6 +2,8 @@ import logging.config,json,os,time,math
 import pandas as pd
 from .binance_api import binance_trading_volume , min_to_ms
 from datetime import datetime , timedelta
+from airflow.models import Variable
+
 
 """
 max time back of 2,75 years should take around 230 hours to complete (almost 10 days)
@@ -20,23 +22,22 @@ def setup_logging():
 class CryptoDataETL():
  
     SUPPORTED_CRYPTO_TOKENS:set[str] = {"BTC", "ETH", "SOL"}
-    MAX_TIME_FRAME_HOURS = 3   #how far back will data be collected in hours, equivalent to 2,75 years 
-    DATA_TIME_WINDOW_MIN = 5 #how many minutes of data does each column represent
+    MAX_TIME_FRAME_HOURS = float(Variable.get("MAX_TIME_FRAME_HOURS"))   #how far back will data be collected in hours, equivalent to 2,75 years 
+    MINS_PER_ROW = int(Variable.get("MINS_PER_ROW")) #how many minutes of data does each row represent
     TRADE_API_TIME_INTERVAL = 100000 #in ms, the time window for getting aggregated transaction data
-    DATA_CHUNK_NUM_ROWS = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
-    MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/DATA_TIME_WINDOW_MIN) #max number of rows for the CSV
-    
+    DATA_CHUNK_NUM_ROWS = int(Variable.get("DATA_CHUNK_NUM_ROWS")) #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
+    MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
+    HOURS_BETWEEN_DAILY_UPDATES: int = int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES"))  #how many hours are there to be between each daily uppdate of the dataset by the airflow scheduler
+
     crypto_token: str
-    __latest_unix_time: int #the latest/most recent unix time present in the dataset
     __logger: logging.Logger
 
-    def __init__(self,crypto_token:str,enable_logs:bool = True, )->None:
+    def __init__(self,crypto_token:str,enable_logs:bool = True)->None:
         if crypto_token not in self.SUPPORTED_CRYPTO_TOKENS:
            raise IOError("Crypo token name not supported")
         else:     
            self.crypto_token = crypto_token + "USDT" #binance api needs USDT to get the token value in USD
     
-        self.__latest_unix_time:int = -1
         if enable_logs:
             self.__logger = logging.getLogger(f"crypto_data_etl_{crypto_token}")
 
@@ -60,7 +61,7 @@ class CryptoDataETL():
             raise IOError(f"Amount of hours exceeds MAX_TIME_FRAME of {self.MAX_TIME_FRAME_HOURS} hours ({self.MAX_TIME_FRAME_HOURS/24/365} years)")
         
         time_frame_mins:int | float = time_frame_hours * 60
-        num_rows:int = math.ceil(time_frame_mins/self.DATA_TIME_WINDOW_MIN) #how many time_window rows will be needed to cover the entire time_frame passed as arg
+        num_rows:int = math.ceil(time_frame_mins/self.MINS_PER_ROW) #how many time_window rows will be needed to cover the entire time_frame passed as arg
 
         columns_list:list[str] = [   
                     "DATE", 
@@ -86,7 +87,7 @@ class CryptoDataETL():
             cur = crypto_token
             api_return_time:float = time.time()
             data:dict | None = binance_trading_volume(
-                            time_window_min=self.DATA_TIME_WINDOW_MIN,
+                            time_window_min=self.MINS_PER_ROW,
                             end_unix_time= cur_unix_time,  # type: ignore
                             crypto_token= cur,
                             api_time_interval_ms= self.TRADE_API_TIME_INTERVAL
@@ -104,9 +105,9 @@ class CryptoDataETL():
                             data.get(f"{cur}_TOTAL_AGGRT_TRANSACTIONS",None)
                         ]
             
-            cur_unix_time  -= min_to_ms(self.DATA_TIME_WINDOW_MIN)
+            cur_unix_time  -= min_to_ms(self.MINS_PER_ROW)
             df.loc[i] = currency_data # type: ignore
-            start_date -= timedelta(minutes=self.DATA_TIME_WINDOW_MIN)
+            start_date -= timedelta(minutes=self.MINS_PER_ROW)
             print(f"it took the time {time.time()- row_timer} to get a DF row")
         
         if df.shape[0] == 0:
@@ -206,90 +207,109 @@ class CryptoDataETL():
         
         return df
 
-    def set_unix_time_from_df(self,df:pd.DataFrame)->None:
+    def __get_df_missing_hours(self,df: pd.DataFrame)->float:
         """
-        Sets the instance variable (__latest_unix_time) to the latest date that was processed by a dataframe 
-        Plus an offset the size of each crypto trade API call timespam (TRADE_API_TIME_INTERVAL) in ms
+        Given a df, this function calculates how many hours of data are missing between the max amount of hours 
+        supposed to be in the dataset (set by an airflow env var) and the current amount of hours covered by the df rows.
 
         Args:
-           df (pd.Dataframe) : the existing DF of which we will take the data and find the latest date already processed
-        
+            df (pd.DataFrame): Pandas df representing the dataset
+
+        Return -> (float) how many hours of data the df has if compared to the max supposed hours in the dataset
         """
-        
         if not isinstance(df, pd.DataFrame):
-            self.__logger.exception("in function set_unix_time_from_df: Input param df isnt of type Pandas Dataframe")
-            raise TypeError("in function set_unix_time_from_df: Input param df isnt of type Pandas Dataframe")
+            self.__logger.exception("in function __get_df_missing_hours: Input param df isnt of type Pandas Dataframe")
+            raise TypeError("in function __get_df_missing_hours: Input param df isnt of type Pandas Dataframe")
         
         if df.shape[0] == 0:
-            self.__logger.exception("in function set_unix_time_from_df: Input dataframe is empty")
-            raise TypeError("in function set_unix_time_from_df: Input dataframe is empty")
+            self.__logger.exception("in function __get_df_missing_hours: Input dataframe is empty")
+            raise TypeError("in function __get_df_missing_hours: Input dataframe is empty")
         
-        newest_date: datetime = df.at[0, "DATE"]
-        self.__latest_unix_time = (int(datetime.timestamp(newest_date)) * 1000) + self.TRADE_API_TIME_INTERVAL
+        num_rows:int = df.shape[0]
+        mins_per_row: int = Variable.get("MINS_PER_ROW")
+        total_hours_covered: float = (num_rows * mins_per_row)/60
 
+        return Variable.get("MAX_TIME_FRAME_HOURS") - total_hours_covered
+        
     def create_dataset(self)-> pd.DataFrame:
         """
-        Creates and fills an empty CSV dataset with a certain amount of binance data for a certain crypto token
+        Creates and fills an empty CSV dataset with a certain amount of binance data for a certain crypto token.
+        Arguments for the amount of data are Airflow env varibles such as "MAX_TIME_FRAME_HOURS"
 
-        Args:
-                save_df_func (Callable[pd.Dataframe] -> None) : function to save the pandas dataframe in some way,
-                either saving locally or writing on some cloud storage
-        
-        Return -> (int) unix time in ms when the function was called (used to know how behind cur time the dataset is)
+        Return -> (pd.DataFrame) Dataset filled with the amount of data for the period specified in the env variable
                 
-        
         """
 
-        if self.__latest_unix_time != -1:
-            raise Exception("dataset is not empty, please use the update_dataset function to update the existing data")
-
-        MAX_TIME_FRAME_HOURS:int =  3 #self.MAX_TIME_FRAME_HOURS
-        
-        CHUNKS_OF_DATA:int = self.__get_num_chunks(MAX_TIME_FRAME_HOURS) #in how many data chunks we are going to split the extraction 
-        hours_per_chunk: float = MAX_TIME_FRAME_HOURS/CHUNKS_OF_DATA #before 3, after 2.5
+        CHUNKS_OF_DATA:int = self.__get_num_chunks(self.MAX_TIME_FRAME_HOURS) #in how many data chunks we are going to split the extraction 
+        hours_per_chunk: float = self.MAX_TIME_FRAME_HOURS/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
         print(f"chunks of data {CHUNKS_OF_DATA}")
         cur_unix_time:int = self.__seconds_to_unix(time.time())
-        self.__latest_unix_time = cur_unix_time
 
-        df:pd.DataFrame = self.__get_data_chunks(
+        df:pd.DataFrame = self.__get_data_chunks(  #fills the data will all the hours in the specified timeframe
                 hours_per_chunk = hours_per_chunk,
                 chunks_of_data = CHUNKS_OF_DATA,
                 cur_unix_time  = cur_unix_time
         )
         
         return df 
-        
+          
     def update_dataset(self, df: pd.DataFrame)->pd.DataFrame:
         """
-        updates the dataset with data from current time to the latest_unix_time in the dataset, 
-        a valid instance var of the latest_unix_time must be set before calling this method
+        This function can do either:
+        1)    Updates an input dataframe with the remaining hours of data necessary to reach the max hours covered by the 
+              dataset, set by an airflow env variable "MAX_TIME_FRAME_HOURS", or updates it according to daily updates to renew the data
         
+        2)    Case the dataset already covers the max amount of hours, this function will update the dataset with new data daily,
+              the amount of hours covered by this new update is set in the airflow env var "HOURS_BETWEEN_DAILY_UPDATES"      
+        
+        Args:
+            df (pd.Dataframe): existing dataset 
+
+        Return -> (pd.Dataframe) the updated dataset now covering the max amount of hours
         """
-        if self.__latest_unix_time == -1:
-            raise Exception("last unix time covered by the data is empty, please provide the timestamp for an existing dataset of the use create_dataset func")
         
         if not isinstance(df, pd.DataFrame):
             self.__logger.exception("in function update_dataset:  Input param df isnt of type Pandas Dataframe")
             raise TypeError("Input param df isnt of type Pandas Dataframe")
 
+        df_missing_hours:float = self.__get_df_missing_hours(df) #how many hours are missing from the df if compared to the max hours the dataset is supposed to cover
         cur_unix_time:int = self.__seconds_to_unix(time.time())
-        unix_time_dif:int = cur_unix_time - self.__latest_unix_time
+
+        if df_missing_hours <= self.HOURS_BETWEEN_DAILY_UPDATES: #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
+            df_missing_hours = self.HOURS_BETWEEN_DAILY_UPDATES
     
-        time_frame_hours:float = unix_time_dif / 3600000  #unix time in ms to hours 
-        num_of_chunks: int = self.__get_num_chunks(time_frame_hours)
-        hours_per_chunk:float = time_frame_hours/num_of_chunks
-        
+        num_of_chunks: int = self.__get_num_chunks(df_missing_hours)
+        hours_per_chunk:float = df_missing_hours/num_of_chunks
+            
         print(hours_per_chunk)
         updated_df: pd.DataFrame = self.__get_data_chunks( #df for the new data
-            hours_per_chunk=hours_per_chunk,
-            chunks_of_data= num_of_chunks,
-            cur_unix_time= cur_unix_time
+                hours_per_chunk=hours_per_chunk,
+                chunks_of_data= num_of_chunks,
+                cur_unix_time= cur_unix_time
         )
-
-        end_unix_time:int = self.__seconds_to_unix(time.time())
-        self.__latest_unix_time = end_unix_time
+        
         df = self.__add_crypto_dataframes(newer_data=updated_df,older_data=df)
-
         return df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""MAX_TIME_FRAME_HOURS = 3   #how far back will data be collected in hours, equivalent to 2,75 years 
+    MINS_PER_ROW = 5 #how many minutes of data does each column represent
+    TRADE_API_TIME_INTERVAL = 100000 #in ms, the time window for getting aggregated transaction data
+    DATA_CHUNK_NUM_ROWS = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
+    MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
+"""
         
 
