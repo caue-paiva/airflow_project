@@ -12,3 +12,4 @@ __pycache__/
 .airflowctl
 s3_handler.py
 airflow_test/airflow_env
+test_s3.py

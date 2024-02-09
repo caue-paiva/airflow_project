@@ -135,6 +135,18 @@ class CryptoDataETL():
 
         newer_date = newer_data.at[0,"DATE"]
         old_date = older_data.at[0,"DATE"]
+       
+        if not isinstance( newer_date, pd.Timestamp):
+             print("newer date isnt instance")
+             newer_date = pd.to_datetime(newer_date)
+
+        if not isinstance( old_date, pd.Timestamp):
+             print("older date isnt instance")
+             old_date = pd.to_datetime(old_date)
+             
+        print(type(newer_date), newer_date)
+        print(type(old_date), old_date)
+
         if old_date > newer_date:
             raise IOError("most recent date from the older dataframe is more recent than the dates from the newer dataframe")
         
@@ -142,14 +154,18 @@ class CryptoDataETL():
         newer_data_row_num:int = newer_data.shape[0]
 
         if older_data_row_num + newer_data_row_num <= self.MAX_ROW_NUM:
-            return pd.concat(objs=[newer_data,older_data], axis= 0, ignore_index=True)    
+            new_df =  pd.concat(objs=[newer_data,older_data], axis= 0, ignore_index=True)    
+            new_df["DATE"] = pd.to_datetime(new_df["DATE"])
+            return new_df
         else:
             rows_to_remove: int = (older_data_row_num + newer_data_row_num) - self.MAX_ROW_NUM   
         
             first_row_to_remove:int = older_data_row_num - rows_to_remove 
             older_data = older_data.drop(index=[i for i in range(first_row_to_remove, older_data_row_num)]) 
 
-            return pd.concat(objs=[newer_data,older_data], axis= 0, ignore_index=True)
+            new_df =  pd.concat(objs=[newer_data,older_data], axis= 0, ignore_index=True)    
+            new_df["DATE"] = pd.to_datetime(new_df["DATE"])
+            return new_df
 
     def __seconds_to_unix(self, seconds:float)->int:
         return int(seconds*1000)
@@ -158,7 +174,8 @@ class CryptoDataETL():
         rows_per_chunk:int = self.DATA_CHUNK_NUM_ROWS
         hours_per_chunk:int= math.ceil(rows_per_chunk/12) #12 rows make up 1 hour, since each row = 5min of data
         chunks:int = math.ceil(time_frame_hours/hours_per_chunk)
-       
+        if chunks <= 0:
+            chunks = 1
         return chunks
 
     def __get_data_chunks(self,hours_per_chunk:float,chunks_of_data:int, cur_unix_time:int)->pd.DataFrame:
@@ -273,11 +290,16 @@ class CryptoDataETL():
             raise TypeError("Input param df isnt of type Pandas Dataframe")
 
         df_missing_hours:float = self.__get_df_missing_hours(df) #how many hours are missing from the df if compared to the max hours the dataset is supposed to cover
+        
+        
         cur_unix_time:int = self.__seconds_to_unix(time.time())
+        
+        if df_missing_hours <= self.HOURS_BETWEEN_DAILY_UPDATES : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
+            df_missing_hours: float = min(self.HOURS_BETWEEN_DAILY_UPDATES,self.MAX_TIME_FRAME_HOURS )
+
+        
+        
         print(f" //// df missing hours {df_missing_hours} \n")
-        if df_missing_hours <= self.HOURS_BETWEEN_DAILY_UPDATES: #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours = self.HOURS_BETWEEN_DAILY_UPDATES #error occours when daily updates hours is larger than max hours, test error only, fix it
-    
         num_of_chunks: int = self.__get_num_chunks(df_missing_hours)
         hours_per_chunk:float = df_missing_hours/num_of_chunks
             
@@ -289,6 +311,7 @@ class CryptoDataETL():
         )
         
         df = self.__add_crypto_dataframes(newer_data=updated_df,older_data=df)
+        df.to_csv("/home/kap/airflow_test/debug.csv")
         return df
 
 

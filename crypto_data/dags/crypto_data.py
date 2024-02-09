@@ -4,11 +4,13 @@ from pendulum import datetime
 from include.crypto_data_etl import CryptoDataETL
 import pandas as pd 
 import os , json
+from airflow.io.path import ObjectStoragePath
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
-print(f"cur dir path {CUR_DIR_PATH}")
 CSV_FILE_PATH: str =  os.path.join(CUR_DIR_PATH, "dataset" ,"placeholder.csv")
 DATASET_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
+S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
+
 
 def csv_from_local_files(file_path:str)->pd.DataFrame:
     return pd.read_csv(file_path)
@@ -28,10 +30,6 @@ def update_dataset_metadata(crypto_token:str,df: pd.DataFrame)->None:
             return 
            
     raise Exception(f"Was not able to find the correct token {crypto_token} in the dataset metadata")
-          
-
-#def csv_from_s3()->pd.DataFrame: 
-  #  pass
 
 @dag(
      start_date = datetime(2024,1,1),
@@ -39,8 +37,6 @@ def update_dataset_metadata(crypto_token:str,df: pd.DataFrame)->None:
      tags = ["crypto_data"],
      catchup = False,
 )
-
-
 def crypto_data_etl()->None:
     TOKEN = "BTC"
     etl = CryptoDataETL(crypto_token = TOKEN)
@@ -78,10 +74,19 @@ def crypto_data_etl()->None:
         df: pd.DataFrame = csv_from_local_files(CSV_FILE_PATH)
         return etl.update_dataset(df)
     
-    @task(task_id = "write_df_to_file")
+    """@task(task_id = "write_df_to_file")
     def write_df_to_file(df: pd.DataFrame)->None:
         df.to_csv(CSV_FILE_PATH, index= False)
-        update_dataset_metadata(TOKEN,df)
+        update_dataset_metadata(TOKEN,df)"""
+    
+    @task(task_id = "write_df_to_file")
+    def write_df_to_file(df:pd.DataFrame)->ObjectStoragePath:
+        path = S3_BUCKET / "dataframe_test.csv"
+        
+        with path.open("wb") as f:
+            df.to_csv(f,index=False)
+            
+        return path
     
     dataset_rows = check_dataset_num_rows()
     path_branch = branch_on_dataset_size(dataset_rows) # type: ignore
