@@ -1,8 +1,8 @@
 [
     {
         "crypto_token": "BTC",
-        "dataset_exists": false,
-        "number_of_rows": 0
+        "dataset_exists": true,
+        "number_of_rows": 18
     },
     {
         "crypto_token": "ETH",
