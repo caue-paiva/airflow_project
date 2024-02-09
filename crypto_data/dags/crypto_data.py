@@ -7,13 +7,9 @@ import os , json
 from airflow.io.path import ObjectStoragePath
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
-CSV_FILE_PATH: str =  os.path.join(CUR_DIR_PATH, "dataset" ,"placeholder.csv")
 LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
 S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
 DATASET_METADATA_FILENAME = "dataset_metadata.json"
-
-def csv_from_local_files(file_path:str)->pd.DataFrame:
-    return pd.read_csv(file_path)
 
 def save_metadata_locally(metadata_json:list[dict])->bool:
     with open(LOCAL_METADATA_PATH, "w") as f:
@@ -32,15 +28,16 @@ def crypto_data_etl()->None:
     etl = CryptoDataETL(crypto_token = TOKEN)
 
     @task(task_id = "check_dataset_num_rows")
-    def check_dataset_num_rows()-> int:
+    def check_dataset_num_rows()-> int:  #add a fallback in case the metadata doesnt exist
         path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
-        with path.open("r") as f:
+        try:
+            with path.open("r") as f:
                 metadata:list[dict] = json.load(f)
                 for in_token in metadata:
                     if in_token.get("crypto_token") == TOKEN: #if we find the correct token
                         if not in_token.get("dataset_exists"): #if it doesnt exist
-                            save_metadata_locally( metadata)
+                            save_metadata_locally(metadata)
                             return -1
                     
                         num_rows: int| None = in_token.get("number_of_rows", None) #get the number of rows
@@ -49,6 +46,16 @@ def crypto_data_etl()->None:
                         save_metadata_locally( metadata)
                         return num_rows
                 raise Exception("Didnt find the correct token in the JSON file")
+        except: 
+             #in case the s3 doesnt have a metadata file, we need to create one locally  with all values set to zero
+             with open(LOCAL_METADATA_PATH, "w") as f:
+                initial_template = [
+                                     {"crypto_token": "BTC","dataset_exists": False, "number_of_rows": 0},                                        
+                                     {"crypto_token": "ETH", "dataset_exists": False,"number_of_rows": 0},                                       
+                                     {"crypto_token": "SOL", "dataset_exists": False, "number_of_rows": 0}
+                                   ]
+                json.dump(initial_template, f)
+             return -1 
        
     @task.branch(task_id = "branch_on_dataset_size")
     def branch_on_dataset_size(dataset_rows: int)-> str:
@@ -66,7 +73,7 @@ def crypto_data_etl()->None:
         csv_path = S3_BUCKET / f"{TOKEN}_DATA_{ds}.csv"
         with csv_path.open("rb") as f:
             df = pd.read_csv(f)
-            
+
         return etl.update_dataset(df)
     
     @task(task_id = "write_df_to_file")
