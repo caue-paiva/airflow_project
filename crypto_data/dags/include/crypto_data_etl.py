@@ -1,4 +1,4 @@
-import logging.config,json,os,time,math
+import logging.config,time,math
 import pandas as pd
 from .binance_api import binance_trading_volume , min_to_ms
 from datetime import datetime , timedelta
@@ -6,32 +6,33 @@ from airflow.models import Variable
 
 
 """
+1 hour of processing can get around 104 hours of data
+
 max time back of 2,75 years should take around 230 hours to complete (almost 10 days)
 
+max time of 1.5 years should take 126 hours to complete (5.2 days)
 """
-def setup_logging():
-   
-    with open(os.path.join("logger_config.json"), "r") as f:
-            log_config = json.load(f)
-            logging.config.dictConfig(config=log_config)
-    #except:
-     #   raise Exception("wasnt able to find/open the file logger_config.json, this makes logging impossible")
-
-#setup_logging()
 
 class CryptoDataETL():
-    #
+
+    #rewrite this class to be independent of airflow env variables
+    
     SUPPORTED_CRYPTO_TOKENS:set[str] = {"BTC", "ETH", "SOL"}
+    #var below could be init parameter
     MAX_TIME_FRAME_HOURS = float(Variable.get("MAX_TIME_FRAME_HOURS"))   #how far back will data be collected in hours, equivalent to 2,75 years 
+     #var below could be init parameter
     MINS_PER_ROW = int(Variable.get("MINS_PER_ROW")) #how many minutes of data does each row represent
+    #var below could be init parameter
     TRADE_API_TIME_INTERVAL = int(Variable.get("TRADE_TIME_INTERVAL")) #in ms, the time window for getting aggregated transaction data
+    #can be hardcoded i think
     DATA_CHUNK_NUM_ROWS = int(Variable.get("DATA_CHUNK_NUM_ROWS")) #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
     MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
+    #var below could be init parameter
     HOURS_BETWEEN_DAILY_UPDATES: int = int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES"))  #how many hours are there to be between each daily uppdate of the dataset by the airflow scheduler
 
     crypto_token: str
     __logger: logging.Logger
-
+    #remove logging from init, as airflow already has logs and this kinda makes the class less flexible
     def __init__(self,crypto_token:str,enable_logs:bool = True)->None:
         if crypto_token not in self.SUPPORTED_CRYPTO_TOKENS:
            raise IOError("Crypo token name not supported")

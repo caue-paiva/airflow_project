@@ -24,26 +24,30 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
 )
 
 def crypto_data_etl()->None:
-    TOKEN = "BTC"
+    TOKEN = "BTC" #find a want to enable multiple tokens maybe?
     etl = CryptoDataETL(crypto_token = TOKEN)
 
     @task(task_id = "check_dataset_num_rows")
     def check_dataset_num_rows()-> int:  #add a fallback in case the metadata doesnt exist
+        """
+        Checks the num of rows of the dataset or if it exists or not
+        Used for a branching decision later in the DAG
+        """
         path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
-        try:
+        try: #try opening S3 bucket metadata json file
             with path.open("r") as f:
                 metadata:list[dict] = json.load(f)
                 for in_token in metadata:
                     if in_token.get("crypto_token") == TOKEN: #if we find the correct token
-                        if not in_token.get("dataset_exists"): #if it doesnt exist
-                            save_metadata_locally(metadata)
+                        if not in_token.get("dataset_exists"): #if dataset doesnt exist already return -1 rows
+                            save_metadata_locally(metadata) #save s3 file locally for ease of acess from other funcs
                             return -1
                     
                         num_rows: int| None = in_token.get("number_of_rows", None) #get the number of rows
                         if num_rows == None:
                             raise Exception("Was not possible to find the number of rows") #if the number of rows info doesnt exist, raise except
-                        save_metadata_locally( metadata)
+                        save_metadata_locally(metadata)
                         return num_rows
                 raise Exception("Didnt find the correct token in the JSON file")
         except: 
@@ -57,7 +61,7 @@ def crypto_data_etl()->None:
                 json.dump(initial_template, f)
              return -1 
        
-    @task.branch(task_id = "branch_on_dataset_size")
+    @task.branch(task_id = "branch_on_dataset_size") #branches the DAG based the dataset existing or not
     def branch_on_dataset_size(dataset_rows: int)-> str:
         if dataset_rows <= 0: 
             return "get_first_dataset"
@@ -71,35 +75,35 @@ def crypto_data_etl()->None:
     @task(task_id= "fill_existing_dataset")
     def fill_existing_dataset(ds = None)->pd.DataFrame:
         csv_path = S3_BUCKET / f"{TOKEN}_DATA_{ds}.csv"
-        with csv_path.open("rb") as f:
+        with csv_path.open("rb") as f: #reads existing csv to a df
             df = pd.read_csv(f)
 
-        return etl.update_dataset(df)
+        return etl.update_dataset(df) #updates and concats the older df
     
-    @task(task_id = "write_df_to_file")
+    @task(task_id = "write_df_to_file") #ds is a dag parameter for current date
     def write_df_to_file(df:pd.DataFrame,ds = None)-> tuple[ObjectStoragePath, ObjectStoragePath]:
         csv_path = S3_BUCKET / f"{TOKEN}_DATA_{ds}.csv"
         metadata_path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
-        num_rows:int = df.shape[0]
+        num_rows:int = df.shape[0] #get number of rows in dataframe
         
         with csv_path.open("wb") as f:
-            df.to_csv(f,index=False)
+            df.to_csv(f,index=False) #saves CSV on S3
         
-        with open(LOCAL_METADATA_PATH, "r") as f:
+        with open(LOCAL_METADATA_PATH, "r") as f: #opens local metadata json file  
             metadata:list[dict] = json.load(f)
             for in_token in metadata:
                 if in_token.get("crypto_token") == TOKEN: #if we find the correct token
-                       in_token["dataset_exists"] = True
+                       in_token["dataset_exists"] = True #change the list of dicts from the json with the new row num
                        in_token["number_of_rows"] = num_rows
                        break
             else:
                 raise Exception("Didnt find the correct token in the JSON file")
 
-        with metadata_path.open("w") as f:
+        with metadata_path.open("w") as f: #writes the json file to S#
             json.dump(metadata,f, indent=4)
                
-        return csv_path, metadata_path
+        return csv_path, metadata_path #returns a tuple of 2 ObjectStoragePath
     
     dataset_rows = check_dataset_num_rows()
     path_branch = branch_on_dataset_size(dataset_rows) # type: ignore
