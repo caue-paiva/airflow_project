@@ -1,6 +1,7 @@
 import requests , math, time
+from typing import Union,Optional
 
-def __op_is_sell(transaction:dict)->bool | None: 
+def __op_is_sell(transaction:dict)->Optional[bool]: 
      """
      #Sell Operation ("m" is true): The trade represents selling BTC for USDT.   
      #Buy Operation ("m" is false): The trade represents buying BTC with USDT.
@@ -10,10 +11,10 @@ def __op_is_sell(transaction:dict)->bool | None:
            return None
      return transaction["m"] == True
 
-def min_to_ms(min:int | float)->int:
+def min_to_ms(min:Union[int,float])->int:
      return int(min*60*1000)
 
-def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:int)->float | None:
+def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:int)->Optional[float]:
      UNIX_TIME_INTERVAL:int = api_time_interval_ms # in ms, approx 10s
      kline_data_url = "https://api.binance.com/api/v3/klines"
      params:dict = {
@@ -25,7 +26,7 @@ def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:i
      }
      response = requests.get(url=kline_data_url, params=params)
      if response.status_code == 200:
-            json_result:list[list[str | float]] = response.json()
+            json_result:list[list[Union[str,float]]] = response.json()
      else:
             print(F"Failure in getting aggregate trading data: {response.status_code}, response: {response.text}")
             return None
@@ -33,7 +34,7 @@ def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:i
           return None
      return float(json_result[0][1])
 
-def binance_server_time()->int | None:
+def binance_server_time()->Optional[int]:
         response = requests.get("https://api.binance.com/api/v3/time")
         if response.status_code == 200:
              json_result:dict = response.json()
@@ -41,7 +42,7 @@ def binance_server_time()->int | None:
         else:
             return None
 
-def binance_trading_volume(time_window_min: float|int, crypto_token:str,api_time_interval_ms:int ,end_unix_time:int = 0)-> dict[str,float|int] | None:
+def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,api_time_interval_ms:int ,end_unix_time:int = 0)-> Optional[ dict[str, Union[int,float]] ]:
     print("binance func")
     bin_api_func :float = time.time()
     MAX_REQUEST_TIMEFRAME = api_time_interval_ms # type: ignore /// 60-90k ms is the limit time (based on some test) where you can get all aggregata trading without hitting the 1000 results limit on the binance API
@@ -57,7 +58,7 @@ def binance_trading_volume(time_window_min: float|int, crypto_token:str,api_time
     total_transactions:int = 0
     requests_hitting_limit:int = 0 #number of requests hitting the 1000 responses API limit
     final_price_timer:float = time.time()
-    final_price: float | None = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms= api_time_interval_ms) #price of the crypto token at the latest date in the timeframe
+    final_price: Optional[float] = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms= api_time_interval_ms) #price of the crypto token at the latest date in the timeframe
     print(f"final price took {time.time()- final_price_timer} ")
     if final_price == None:
          return None 
@@ -103,7 +104,7 @@ def binance_trading_volume(time_window_min: float|int, crypto_token:str,api_time
         print(f"it took the time {time.time()- request_timer} for a binance api request")
     print(f"a total of {requests_needed} api requests is needed")
     start_timer: float = time.time()
-    start_price: float | None = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms = api_time_interval_ms) #price of the crypto token at the earliest date in the timeframe
+    start_price: Optional[float] = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms = api_time_interval_ms) #price of the crypto token at the earliest date in the timeframe
     print(f"start price took {time.time() - start_timer}")
     if start_price == None:
          return None 

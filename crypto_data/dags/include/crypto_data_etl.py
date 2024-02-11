@@ -3,7 +3,7 @@ import pandas as pd
 from .binance_api import binance_trading_volume , min_to_ms
 from datetime import datetime , timedelta
 from airflow.models import Variable
-
+from typing import Union, Optional
 
 """
 1 hour of processing can get around 104 hours of data
@@ -50,8 +50,8 @@ class CryptoDataETL():
         self.trade_api_time_interval: int = trade_api_time_interval
         self.data_chunk_num_rows:int = data_chunk_num_rows
         self.max_row_num :int = math.ceil((self.max_time_frame_hours* 60)/ self.mins_per_row)
-
-    def __create_crypto_dataframe(self, time_frame_hours:int|float,crypto_token: str, end_unix_time:int = 0)-> pd.DataFrame | None: 
+    
+    def __create_crypto_dataframe(self, time_frame_hours: Union[int,float],crypto_token: str, end_unix_time:int = 0)-> Optional[pd.DataFrame]: 
         """
         Method that returns a pd Dataframe or None (if no data was able to be returned) with each column being data about price , trading volume
         and net-flow of a given crypto asset
@@ -70,7 +70,7 @@ class CryptoDataETL():
         if time_frame_hours > self.max_time_frame_hours:
             raise IOError(f"Amount of hours exceeds MAX_TIME_FRAME of {self.max_time_frame_hours} hours ({self.max_time_frame_hours/24/365} years)")
         
-        time_frame_mins:int | float = time_frame_hours * 60
+        time_frame_mins: Union[int,float] = time_frame_hours * 60
         num_rows:int = math.ceil(time_frame_mins/self.mins_per_row) #how many time_window rows will be needed to cover the entire time_frame passed as arg
 
         columns_list:list[str] = [   
@@ -96,7 +96,7 @@ class CryptoDataETL():
           
             cur = crypto_token
             api_return_time:float = time.time()
-            data:dict | None = binance_trading_volume(
+            data: Optional[dict] = binance_trading_volume(
                             time_window_min=self.mins_per_row,
                             end_unix_time= cur_unix_time,  # type: ignore
                             crypto_token= cur,
@@ -105,7 +105,8 @@ class CryptoDataETL():
             print(f"it took the time {time.time()- api_return_time} to get a return from api")
             if data == None: #in case the row data is incomplete, just skip that time frame 
                 continue
-            currency_data:list[float|int|datetime] = [
+            
+            currency_data:list[Union[float,int,datetime]] = [
                             start_date, 
                             data.get(f"{cur}_START_PRICE",None),
                             data.get(f"{cur}_END_PRICE",None),
@@ -206,8 +207,8 @@ class CryptoDataETL():
                 self.__logger.exception(f"tried to extract the chunk number {extracted_chunks+1}, {max_chunk_tries} times but none were sucessful, shutting down program")
                 raise Exception(f"tried to extract the chunk number {extracted_chunks+1}, {max_chunk_tries} times but none were sucessful, shutting down program")
             
-            try:
-                    chunk_df: pd.DataFrame | None = self.__create_crypto_dataframe(
+            try:    
+                    chunk_df:Optional[pd.DataFrame] = self.__create_crypto_dataframe(
                             time_frame_hours=hours_per_chunk,
                             crypto_token=self.crypto_token,
                             end_unix_time = cur_unix_time # type: ignore

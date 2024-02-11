@@ -5,6 +5,7 @@ from include.crypto_data_etl import CryptoDataETL
 import pandas as pd 
 import os , json
 from airflow.io.path import ObjectStoragePath
+from typing import Union , Optional
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
 LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
@@ -48,8 +49,7 @@ def crypto_data_etl()->None:
                         if not in_token.get("dataset_exists"): #if dataset doesnt exist already return -1 rows
                             save_metadata_locally(metadata) #save s3 file locally for ease of acess from other funcs
                             return -1
-                    
-                        num_rows: int| None = in_token.get("number_of_rows", None) #get the number of rows
+                        num_rows: Optional[int] = in_token.get("number_of_rows", None) #get the number of rows
                         if num_rows == None:
                             raise Exception("Was not possible to find the number of rows") #if the number of rows info doesnt exist, raise except
                         save_metadata_locally(metadata)
