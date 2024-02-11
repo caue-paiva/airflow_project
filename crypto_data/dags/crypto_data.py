@@ -25,7 +25,12 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
 
 def crypto_data_etl()->None:
     TOKEN = "BTC" #find a want to enable multiple tokens maybe?
-    etl = CryptoDataETL(crypto_token = TOKEN)
+    etl = CryptoDataETL(
+        crypto_token = TOKEN,
+        max_time_frame_hours=  float(Variable.get("MAX_TIME_FRAME_HOURS")),
+        hours_between_daily_updates= int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES")),
+        mins_per_row=  int(Variable.get("MINS_PER_ROW")),
+        )
 
     @task(task_id = "check_dataset_num_rows")
     def check_dataset_num_rows()-> int:  #add a fallback in case the metadata doesnt exist
@@ -73,16 +78,16 @@ def crypto_data_etl()->None:
         return etl.create_dataset()
     
     @task(task_id= "fill_existing_dataset")
-    def fill_existing_dataset(ds = None)->pd.DataFrame:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA_{ds}.csv"
+    def fill_existing_dataset()->pd.DataFrame:
+        csv_path = S3_BUCKET / f"{TOKEN}_DATA.csv"
         with csv_path.open("rb") as f: #reads existing csv to a df
             df = pd.read_csv(f)
 
         return etl.update_dataset(df) #updates and concats the older df
     
     @task(task_id = "write_df_to_file") #ds is a dag parameter for current date
-    def write_df_to_file(df:pd.DataFrame,ds = None)-> tuple[ObjectStoragePath, ObjectStoragePath]:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA_{ds}.csv"
+    def write_df_to_file(df:pd.DataFrame)-> tuple[ObjectStoragePath, ObjectStoragePath]:
+        csv_path = S3_BUCKET / f"{TOKEN}_DATA.csv"
         metadata_path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
         num_rows:int = df.shape[0] #get number of rows in dataframe
@@ -100,7 +105,7 @@ def crypto_data_etl()->None:
             else:
                 raise Exception("Didnt find the correct token in the JSON file")
 
-        with metadata_path.open("w") as f: #writes the json file to S#
+        with metadata_path.open("w") as f: #writes the json file to S3
             json.dump(metadata,f, indent=4)
                
         return csv_path, metadata_path #returns a tuple of 2 ObjectStoragePath
@@ -115,35 +120,12 @@ def crypto_data_etl()->None:
     path_branch >> create_dataset  >> write_from_new
     path_branch >> update_dataset >> write_from_existing
     
-
 crypto_data_etl()
 
+"""
+Testing: 
 
-"""@task(task_id = "check_dataset_num_rows")
-    def check_dataset_num_rows()->int:
-        with open(DATASET_METADATA_PATH, "r") as f:
-            metadata:list[dict] = json.load(f)
-            for in_token in metadata:
-                if in_token.get("crypto_token") == TOKEN:
-                    if not in_token.get("dataset_exists"):
-                        return -1
-                    
-                    num_rows: int| None = in_token.get("number_of_rows", None)
-                    if num_rows == None:
-                        raise Exception("Was not possible to find the number of rows")
-                    
-                    return num_rows
-           
-            raise Exception(f"Was not able to find the correct token {TOKEN} in the dataset metadata")
-         @task(task_id = "write_df_to_file")
-         def write_df_to_file(df: pd.DataFrame)->None:
-        df.to_csv(CSV_FILE_PATH, index= False)
-        update_dataset_metadata(TOKEN,df)     
-            
-            
-            
-            
-            
-            
-            
-            """
+1) pipeline works when no metadata json is found (create dataset from 0 and uploads json to s3)
+
+
+"""

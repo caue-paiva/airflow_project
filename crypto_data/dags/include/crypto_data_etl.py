@@ -14,26 +14,28 @@ max time of 1.5 years should take 126 hours to complete (5.2 days)
 """
 
 class CryptoDataETL():
-
-    #rewrite this class to be independent of airflow env variables
     
     SUPPORTED_CRYPTO_TOKENS:set[str] = {"BTC", "ETH", "SOL"}
-    #var below could be init parameter
-    MAX_TIME_FRAME_HOURS = float(Variable.get("MAX_TIME_FRAME_HOURS"))   #how far back will data be collected in hours, equivalent to 2,75 years 
-     #var below could be init parameter
-    MINS_PER_ROW = int(Variable.get("MINS_PER_ROW")) #how many minutes of data does each row represent
-    #var below could be init parameter
-    TRADE_API_TIME_INTERVAL = int(Variable.get("TRADE_TIME_INTERVAL")) #in ms, the time window for getting aggregated transaction data
-    #can be hardcoded i think
-    DATA_CHUNK_NUM_ROWS = int(Variable.get("DATA_CHUNK_NUM_ROWS")) #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
-    MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
-    #var below could be init parameter
-    HOURS_BETWEEN_DAILY_UPDATES: int = int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES"))  #how many hours are there to be between each daily uppdate of the dataset by the airflow scheduler
 
     crypto_token: str
+    max_time_frame_hours: float  #how far back will data be collected in hours, equivalent to 2,75 years 
+    hours_between_daily_updates: int #how many hours are there to be between each daily update of the dataset 
+    mins_per_row:int  #how many minutes of data does each row represent
+    trade_api_time_interval: int #in ms, the time window for getting aggregated transaction data
+    data_chunk_num_rows:int #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
+    max_row_num :int #max number of rows for the CSV
     __logger: logging.Logger
-    #remove logging from init, as airflow already has logs and this kinda makes the class less flexible
-    def __init__(self,crypto_token:str,enable_logs:bool = True)->None:
+    
+    def __init__(self,
+        crypto_token:str,
+        max_time_frame_hours: float,
+        hours_between_daily_updates: int,
+        mins_per_row:int,
+        enable_logs:bool = True,
+        trade_api_time_interval: int = 100000,
+        data_chunk_num_rows:int = 10000
+        )->None:
+
         if crypto_token not in self.SUPPORTED_CRYPTO_TOKENS:
            raise IOError("Crypo token name not supported")
         else:     
@@ -41,6 +43,13 @@ class CryptoDataETL():
     
         if enable_logs:
             self.__logger = logging.getLogger(f"crypto_data_etl_{crypto_token}")
+        
+        self.max_time_frame_hours: float = max_time_frame_hours
+        self.hours_between_daily_updates: int = hours_between_daily_updates
+        self.mins_per_row:int = mins_per_row
+        self.trade_api_time_interval: int = trade_api_time_interval
+        self.data_chunk_num_rows:int = data_chunk_num_rows
+        self.max_row_num :int = math.ceil((self.max_time_frame_hours* 60)/ self.mins_per_row)
 
     def __create_crypto_dataframe(self, time_frame_hours:int|float,crypto_token: str, end_unix_time:int = 0)-> pd.DataFrame | None: 
         """
@@ -58,11 +67,11 @@ class CryptoDataETL():
         """
         if not isinstance(time_frame_hours,int) and not isinstance(time_frame_hours,float):
             raise TypeError("Input time frame isnt an int or float")
-        if time_frame_hours > self.MAX_TIME_FRAME_HOURS:
-            raise IOError(f"Amount of hours exceeds MAX_TIME_FRAME of {self.MAX_TIME_FRAME_HOURS} hours ({self.MAX_TIME_FRAME_HOURS/24/365} years)")
+        if time_frame_hours > self.max_time_frame_hours:
+            raise IOError(f"Amount of hours exceeds MAX_TIME_FRAME of {self.max_time_frame_hours} hours ({self.max_time_frame_hours/24/365} years)")
         
         time_frame_mins:int | float = time_frame_hours * 60
-        num_rows:int = math.ceil(time_frame_mins/self.MINS_PER_ROW) #how many time_window rows will be needed to cover the entire time_frame passed as arg
+        num_rows:int = math.ceil(time_frame_mins/self.mins_per_row) #how many time_window rows will be needed to cover the entire time_frame passed as arg
 
         columns_list:list[str] = [   
                     "DATE", 
@@ -88,10 +97,10 @@ class CryptoDataETL():
             cur = crypto_token
             api_return_time:float = time.time()
             data:dict | None = binance_trading_volume(
-                            time_window_min=self.MINS_PER_ROW,
+                            time_window_min=self.mins_per_row,
                             end_unix_time= cur_unix_time,  # type: ignore
                             crypto_token= cur,
-                            api_time_interval_ms= self.TRADE_API_TIME_INTERVAL
+                            api_time_interval_ms= self.trade_api_time_interval
                     )
             print(f"it took the time {time.time()- api_return_time} to get a return from api")
             if data == None: #in case the row data is incomplete, just skip that time frame 
@@ -106,9 +115,9 @@ class CryptoDataETL():
                             data.get(f"{cur}_TOTAL_AGGRT_TRANSACTIONS",None)
                         ]
             
-            cur_unix_time  -= min_to_ms(self.MINS_PER_ROW)
+            cur_unix_time  -= min_to_ms(self.mins_per_row)
             df.loc[i] = currency_data # type: ignore
-            start_date -= timedelta(minutes=self.MINS_PER_ROW)
+            start_date -= timedelta(minutes=self.mins_per_row)
             print(f"it took the time {time.time()- row_timer} to get a DF row")
         
         if df.shape[0] == 0:
@@ -154,12 +163,12 @@ class CryptoDataETL():
         older_data_row_num:int = older_data.shape[0] 
         newer_data_row_num:int = newer_data.shape[0]
 
-        if older_data_row_num + newer_data_row_num <= self.MAX_ROW_NUM:
+        if older_data_row_num + newer_data_row_num <= self.max_row_num:
             new_df =  pd.concat(objs=[newer_data,older_data], axis= 0, ignore_index=True)    
             new_df["DATE"] = pd.to_datetime(new_df["DATE"])
             return new_df
         else:
-            rows_to_remove: int = (older_data_row_num + newer_data_row_num) - self.MAX_ROW_NUM   
+            rows_to_remove: int = (older_data_row_num + newer_data_row_num) - self.max_row_num   
         
             first_row_to_remove:int = older_data_row_num - rows_to_remove 
             older_data = older_data.drop(index=[i for i in range(first_row_to_remove, older_data_row_num)]) 
@@ -172,7 +181,7 @@ class CryptoDataETL():
         return int(seconds*1000)
 
     def __get_num_chunks(self,time_frame_hours:float)->int:
-        rows_per_chunk:int = self.DATA_CHUNK_NUM_ROWS
+        rows_per_chunk:int = self.data_chunk_num_rows
         hours_per_chunk:int= math.ceil(rows_per_chunk/12) #12 rows make up 1 hour, since each row = 5min of data
         chunks:int = math.ceil(time_frame_hours/hours_per_chunk)
         if chunks <= 0:
@@ -244,22 +253,22 @@ class CryptoDataETL():
             raise TypeError("in function __get_df_missing_hours: Input dataframe is empty")
         
         num_rows:int = df.shape[0]
-        mins_per_row: int = self.MINS_PER_ROW
+        mins_per_row: int = self.mins_per_row
         total_hours_covered: float = (num_rows * mins_per_row)/60
 
-        return self.MAX_TIME_FRAME_HOURS - total_hours_covered
+        return self.max_time_frame_hours- total_hours_covered
         
     def create_dataset(self)-> pd.DataFrame:
         """
         Creates and fills an empty CSV dataset with a certain amount of binance data for a certain crypto token.
-        Arguments for the amount of data are Airflow env varibles such as "MAX_TIME_FRAME_HOURS"
+        Arguments for the amount of data are Airflow env varibles such as "max_time_frame_hours"
 
         Return -> (pd.DataFrame) Dataset filled with the amount of data for the period specified in the env variable
                 
         """
 
-        CHUNKS_OF_DATA:int = self.__get_num_chunks(self.MAX_TIME_FRAME_HOURS) #in how many data chunks we are going to split the extraction 
-        hours_per_chunk: float = self.MAX_TIME_FRAME_HOURS/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
+        CHUNKS_OF_DATA:int = self.__get_num_chunks(self.max_time_frame_hours) #in how many data chunks we are going to split the extraction 
+        hours_per_chunk: float = self.max_time_frame_hours/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
         print(f"chunks of data {CHUNKS_OF_DATA}")
         cur_unix_time:int = self.__seconds_to_unix(time.time())
 
@@ -275,10 +284,10 @@ class CryptoDataETL():
         """
         This function can do either:
         1)    Updates an input dataframe with the remaining hours of data necessary to reach the max hours covered by the 
-              dataset, set by an airflow env variable "MAX_TIME_FRAME_HOURS", or updates it according to daily updates to renew the data
+              dataset, set by an airflow env variable "max_time_frame_hours", or updates it according to daily updates to renew the data
         
         2)    Case the dataset already covers the max amount of hours, this function will update the dataset with new data daily,
-              the amount of hours covered by this new update is set in the airflow env var "HOURS_BETWEEN_DAILY_UPDATES"      
+              the amount of hours covered by this new update is set in the airflow env var "hours_between_daily_updates"      
         
         Args:
             df (pd.Dataframe): existing dataset 
@@ -295,8 +304,8 @@ class CryptoDataETL():
         
         cur_unix_time:int = self.__seconds_to_unix(time.time())
         
-        if df_missing_hours <= self.HOURS_BETWEEN_DAILY_UPDATES : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours: float = min(self.HOURS_BETWEEN_DAILY_UPDATES,self.MAX_TIME_FRAME_HOURS )
+        if df_missing_hours <= self.hours_between_daily_updates : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
+            df_missing_hours: float = min(self.hours_between_daily_updates,self.max_time_frame_hours)
 
         
         
@@ -329,11 +338,11 @@ class CryptoDataETL():
 
 
 
-"""MAX_TIME_FRAME_HOURS = 3   #how far back will data be collected in hours, equivalent to 2,75 years 
-    MINS_PER_ROW = 5 #how many minutes of data does each column represent
-    TRADE_API_TIME_INTERVAL = 100000 #in ms, the time window for getting aggregated transaction data
-    DATA_CHUNK_NUM_ROWS = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
-    MAX_ROW_NUM:int  = math.ceil((MAX_TIME_FRAME_HOURS * 60)/MINS_PER_ROW) #max number of rows for the CSV
+"""max_time_frame_hours = 3   #how far back will data be collected in hours, equivalent to 2,75 years 
+    mins_per_row = 5 #how many minutes of data does each column represent
+    trade_api_time_interval = 100000 #in ms, the time window for getting aggregated transaction data
+    data_chunk_num_rows = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
+    max_row_num:int  = math.ceil((max_time_frame_hours * 60)/mins_per_row) #max number of rows for the CSV
 """
         
 

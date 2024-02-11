@@ -1,0 +1,12 @@
+{
+    "test_cloud_default": {
+      "conn_type": "test_cloud",
+      "description": null,
+      "login": null,
+      "password": null,
+      "host": null,
+      "port": null,
+      "schema": "default",
+      "extra": null
+    }
+  }
