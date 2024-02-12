@@ -44,3 +44,6 @@ airflowctl airflow variables import variables_setup.json #setting up airflow env
 # 2} Get the specific AWS connection {DO NOT SHARE IT ON GITHUB} and make a json file only with it {or keep the others ununsed connections}
 
 # 3} Import the connections file using airflowctl airflow connections import ${file}
+
+
+# You can setup the connections on airflow UI, but remenber to not only put the JSON but also to fill the bars with the keys above the extra camp
