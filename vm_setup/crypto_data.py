@@ -5,10 +5,16 @@ from include.crypto_data_etl import CryptoDataETL
 import pandas as pd 
 import os , json
 from airflow.io.path import ObjectStoragePath
-from typing import Union , Optional
+from typing import  Optional
+
+"""
+Pay closer attention to the schedule of the DAG and whether it will clash with the hours per daily update, figure it out
+also look what happens in edge cases where the daily update is 12h but the dataset is missing only like 11 hours 
+
+"""
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
-LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
+LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH ,Variable.get("DATASET_METADATA_NAME"))
 S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
 DATASET_METADATA_FILENAME = "dataset_metadata.json"
 
@@ -18,12 +24,11 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
     return True
 
 @dag(
-     start_date = datetime(2024,1,1),
-     schedule =  "@daily",
-     tags = ["crypto_data"],
-     catchup = False,
-)
-
+     start_date = datetime(2024,1,1), #dag start date
+     schedule =  "@daily", #schedule between automatic dag runs
+     tags = ["crypto_data"], #tags to identify the dag
+     catchup = False, # catchup = True will make your dags execute automatically to make up for any missed runs, 
+)                     # better to leave this option as False to avoid problems
 def crypto_data_etl()->None:
     TOKEN = "BTC" #find a want to enable multiple tokens maybe?
     etl = CryptoDataETL(
@@ -48,11 +53,13 @@ def crypto_data_etl()->None:
                     if in_token.get("crypto_token") == TOKEN: #if we find the correct token
                         if not in_token.get("dataset_exists"): #if dataset doesnt exist already return -1 rows
                             save_metadata_locally(metadata) #save s3 file locally for ease of acess from other funcs
+                            print("found s3 bucket but there was no metadata")
                             return -1
                         num_rows: Optional[int] = in_token.get("number_of_rows", None) #get the number of rows
                         if num_rows == None:
                             raise Exception("Was not possible to find the number of rows") #if the number of rows info doesnt exist, raise except
                         save_metadata_locally(metadata)
+                        print("opened s3 bucket and found data")
                         return num_rows
                 raise Exception("Didnt find the correct token in the JSON file")
         except: 
@@ -64,6 +71,7 @@ def crypto_data_etl()->None:
                                      {"crypto_token": "SOL", "dataset_exists": False, "number_of_rows": 0}
                                    ]
                 json.dump(initial_template, f)
+             print("didnt find s3 bucket")
              return -1 
        
     @task.branch(task_id = "branch_on_dataset_size") #branches the DAG based the dataset existing or not
@@ -110,14 +118,14 @@ def crypto_data_etl()->None:
                
         return csv_path, metadata_path #returns a tuple of 2 ObjectStoragePath
     
-    dataset_rows = check_dataset_num_rows()
-    path_branch = branch_on_dataset_size(dataset_rows) # type: ignore
-    create_dataset = get_first_dataset()
-    update_dataset = fill_existing_dataset()
-    write_from_new = write_df_to_file(create_dataset)  # type: ignore
-    write_from_existing = write_df_to_file(update_dataset) # type: ignore
+    dataset_rows = check_dataset_num_rows() #dataset_rows is an Xcom arg that holds the return val of the func
+    path_branch = branch_on_dataset_size(dataset_rows) # type: ignore using the rows parameters on the branch function to return the path                 
+    create_dataset = get_first_dataset()  #dataset funcs return an Xcom arg for the Dataset
+    update_dataset = fill_existing_dataset() 
+    write_from_new = write_df_to_file(create_dataset)  # type: ignore  write functions return a path for the cloud storage for the file write
+    write_from_existing = write_df_to_file(update_dataset) # type: ignore  
 
-    path_branch >> create_dataset  >> write_from_new
+    path_branch >> create_dataset  >> write_from_new #need to set-up dependencies  for both branches
     path_branch >> update_dataset >> write_from_existing
     
 crypto_data_etl()
