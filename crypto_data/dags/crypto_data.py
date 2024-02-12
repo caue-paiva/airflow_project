@@ -59,6 +59,7 @@ def crypto_data_etl()->None:
                         if num_rows == None:
                             raise Exception("Was not possible to find the number of rows") #if the number of rows info doesnt exist, raise except
                         save_metadata_locally(metadata)
+                        print("opened s3 bucket and found data")
                         return num_rows
                 raise Exception("Didnt find the correct token in the JSON file")
         except: 

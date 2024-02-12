@@ -322,7 +322,6 @@ class CryptoDataETL():
         )
         
         df = self.__add_crypto_dataframes(newer_data=updated_df,older_data=df)
-        df.to_csv("/home/kap/airflow_test/debug.csv")
         return df
 
 
