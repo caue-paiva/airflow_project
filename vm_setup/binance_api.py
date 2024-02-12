@@ -16,10 +16,10 @@ def min_to_ms(min:Union[int,float])->int:
 
 def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:int)->Optional[float]:
      UNIX_TIME_INTERVAL:int = api_time_interval_ms # in ms, approx 10s
-     kline_data_url = "https://api.binance.com/api/v3/klines"
+     kline_data_url = "https://api.binance.us/api/v3/klines"
      params:dict = {
           "symbol": symbol,
-          "interval": "1s",
+          "interval": "1m",
           "startTime": end_time_unix - UNIX_TIME_INTERVAL,
           "endTime" :  end_time_unix,
           "limit": 1
@@ -35,7 +35,7 @@ def __binance_crypto_price(symbol:str, api_time_interval_ms:int ,end_time_unix:i
      return float(json_result[0][1])
 
 def binance_server_time()->Optional[int]:
-        response = requests.get("https://api.binance.com/api/v3/time")
+        response = requests.get("https://api.binance.us/api/v3/time")
         if response.status_code == 200:
              json_result:dict = response.json()
              return json_result.get("serverTime",None)
@@ -77,7 +77,7 @@ def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,
             "limit" : 1000
         }
         print("waiting response")
-        response: requests.Response = requests.get("https://api.binance.com/api/v3/aggTrades", params=params)
+        response: requests.Response = requests.get("https://api.binance.us/api/v3/aggTrades", params=params)
         if response.status_code == 200:
                 json_result:list[dict] = response.json()
         else:
@@ -130,4 +130,5 @@ if __name__ == "__main__":
    print(cur_time)
    #return_data = __binance_crypto_price("BTCUSDT",cur_time) # type: ignore
    #print(return_data)
+  
   
