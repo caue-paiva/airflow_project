@@ -15,7 +15,7 @@ cd vm_setup/
 MAIN_WORK_DIR="${pwd}" #main dir we will use for the project, named vm_setup
 
 python3 -m venv airflow_env
-source /airflow_env/bin/activate
+source /airflow_env/bin/activate #we will need to activate this env to use the airflowctl command
 pip install airflowctl
 
 airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} #inits the airflowctl project 
@@ -31,14 +31,14 @@ cd ..
 
 mv binance_api.py crypto_data_etl.py my_airflow_project/dags/include/  #move auxiliary python files to include folder
 
-deactivate #deactivates current env only used to isolated airflowctl installation
-source ${MAIN_WORK_DIR}/${PROJECT_NAME}/.venv/bin/pip install -r ${MAIN_WORK_DIR}/_requirements.txt
+${MAIN_WORK_DIR}/${PROJECT_NAME}/.venv/bin/pip install -r ${MAIN_WORK_DIR}/_requirements.txt
 
 #------ setting up airflow variables and connections, needs to be done in a airflowctl project dir
 
 #--airflow env variables
 
 #13140 hours is equivalent to 1,5 years
+
 airflowctl airflow variables set --description "how far back will data be collected in hours, equivalent to 2,75 years" MAX_TIME_FRAME_HOURS  13140
 airflowctl airflow variables set --description "how many hours are there to be between each daily update of the dataset " HOURS_BETWEEN_DAILY_UPDATES  12
 airflowctl airflow variables set --description "ow many minutes of data does each row represent" MINS_PER_ROW  5
