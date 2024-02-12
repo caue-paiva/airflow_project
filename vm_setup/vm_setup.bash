@@ -1,17 +1,34 @@
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
 PYTHON_VERSION= "3.9.16"
 AIRFLOW_VERSION= "2.8.1"
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-PARENT_DIR="$(dirname "$script_dir")"
+PROJECT_NAME="crypto_data"
+#SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+#PARENT_DIR="$(dirname "$script_dir")"
 
 yes | sudo dnf update #update the system
 yes | sudo dnf install python3-pip #install python and git, [ yes | ] answers any prompt to the command with yes 
 yes | sudo dnf install git
 
-
+git clone https://github.com/caue-paiva/airflow_project -b vm_branch
+cd airflow_project/
+cd vm_setup/
 
 python3 -m venv airflow_env
 source airflow_env/bin/activate
+pip install airflowctl
+
+airflowctl init $(PROJECT_NAME) --airflow-version $(AIRFLOW_VERSION) --python-version $(PYTHON_VERSION) #inits the airflowctl project 
+cd $(PROJECT_NAME)
+$(PROJECT_NAME) build #builds project 
+cd ..
+airflowctl start $(PROJECT_NAME) --background 
+
+cd $(PROJECT_NAME)/dags/ 
+mkdir include #creating folder for python code not used by the dags
+cd ..
+cd ..
+
+mv binance_api.py crypto_data_etl.py my_airflow_project/dags/include/  #move auxiliary python files to include folder
 
 #------ setting up airflow variables and connections, needs to be done in a airflowctl project dir
 
