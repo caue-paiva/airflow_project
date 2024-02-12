@@ -1,4 +1,5 @@
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
+# OBS: remenber to open up a custom TCP port with all IPs allowed at port 8080 on the EC2 instance to connect to the airflow UI remotely  
 export PYTHON_VERSION="3.9.16"
 export AIRFLOW_VERSION="2.8.1"
 export PROJECT_NAME="crypto_data"
