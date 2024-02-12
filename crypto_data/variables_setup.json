@@ -1,0 +1,9 @@
+{
+    "DATASET_METADATA_NAME": "dataset_metadata.json",
+    "DATA_CHUNK_NUM_ROWS": 10000,
+    "HOURS_BETWEEN_DAILY_UPDATES": 1,
+    "MAX_TIME_FRAME_HOURS": 3.0,
+    "MINS_PER_ROW": 5,
+    "TRADE_TIME_INTERVAL": 100000,
+    "test_var": 10
+}

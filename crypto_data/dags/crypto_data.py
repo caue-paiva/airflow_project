@@ -14,7 +14,7 @@ also look what happens in edge cases where the daily update is 12h but the datas
 """
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
-LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
+LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH ,Variable.get("DATASET_METADATA_NAME"))
 S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
 DATASET_METADATA_FILENAME = "dataset_metadata.json"
 
@@ -53,6 +53,7 @@ def crypto_data_etl()->None:
                     if in_token.get("crypto_token") == TOKEN: #if we find the correct token
                         if not in_token.get("dataset_exists"): #if dataset doesnt exist already return -1 rows
                             save_metadata_locally(metadata) #save s3 file locally for ease of acess from other funcs
+                            print("found s3 bucket but there was no metadata")
                             return -1
                         num_rows: Optional[int] = in_token.get("number_of_rows", None) #get the number of rows
                         if num_rows == None:
@@ -69,6 +70,7 @@ def crypto_data_etl()->None:
                                      {"crypto_token": "SOL", "dataset_exists": False, "number_of_rows": 0}
                                    ]
                 json.dump(initial_template, f)
+             print("didnt find s3 bucket")
              return -1 
        
     @task.branch(task_id = "branch_on_dataset_size") #branches the DAG based the dataset existing or not
