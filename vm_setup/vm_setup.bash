@@ -2,8 +2,7 @@
 export PYTHON_VERSION="3.9.16"
 export AIRFLOW_VERSION="2.8.1"
 export PROJECT_NAME="crypto_data"
-#SCRIPT_DIR=
-#PARENT_DIR="${dirname "$script_dir"}"
+export VENV_NAME="airflow_env"
 
 yes | sudo dnf update #update the system
 yes | sudo dnf install python3-pip #install python and git, [ yes | ] answers any prompt to the command with yes 
@@ -12,13 +11,14 @@ yes | sudo dnf install git
 git clone https://github.com/caue-paiva/airflow_project -b vm_branch
 cd airflow_project/
 cd vm_setup/
-export MAIN_WORK_DIR="${pwd}" #main dir we will use for the project, named vm_setup
+export MAIN_WORK_DIR="$(pwd)" #main dir we will use for the project, named vm_setup
 
-python3 -m venv airflow_env
-source /airflow_env/bin/activate #we will need to activate this env to use the airflowctl command
-pip install airflowctl
+python3 -m venv ${VENV_NAME}
+source /${VENV_NAME}/bin/activate #we will need to activate this env to use the airflowctl command
+pip install -r _requirements.txt
+export VENV_PATH=${MAIN_WORK_DIR}/${VENV_NAME}
 
-airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} #inits the airflowctl project 
+airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} ----venv_path ${VENV_PATH} #inits the airflowctl project 
 cd ${PROJECT_NAME}
 airflowctl build #builds project 
 cd ..
@@ -30,24 +30,16 @@ cd ..
 cd ..
 
 mv binance_api.py crypto_data_etl.py ${PROJECT_NAME}/dags/include/  #move auxiliary python files to include folder
-mv crypto_data.py ${PROJECT_NAME}/dags/
-
-
-${MAIN_WORK_DIR}/${PROJECT_NAME}/.venv/bin/pip install -r ${MAIN_WORK_DIR}/test_requirements.txt
-
-#------ setting up airflow variables and connections, needs to be done in a airflowctl project dir
-
-#--airflow env variables
+mv crypto_data.py ${PROJECT_NAME}/dags/ #move main dag file to dag folder
+mv variables_setup.json ${PROJECT_NAME}/  #moves json file that setups the env variables to inside the project
+cd ${PROJECT_NAME}
+airflowctl airflow variables import variables_setup.json #setting up airflow env variables
 
 #13140 hours is equivalent to 1,5 years
 
-airflowctl airflow variables set --description "how far back will data be collected in hours, equivalent to 2,75 years" MAX_TIME_FRAME_HOURS  13140
-airflowctl airflow variables set --description "how many hours are there to be between each daily update of the dataset " HOURS_BETWEEN_DAILY_UPDATES  12
-airflowctl airflow variables set --description "ow many minutes of data does each row represent" MINS_PER_ROW  5
-
 #--connections
 
-# 1} export all connections to a file using airflowctl airflow connections export ${file}
+# 1} export all connections to a file using airflowctl airflow connections export ${file}, needs to be inside airflowctl project folder
 
 # 2} Get the specific AWS connection {DO NOT SHARE IT ON GITHUB} and make a json file only with it {or keep the others ununsed connections}
 
