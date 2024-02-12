@@ -5,7 +5,13 @@ from include.crypto_data_etl import CryptoDataETL
 import pandas as pd 
 import os , json
 from airflow.io.path import ObjectStoragePath
-from typing import Union , Optional
+from typing import  Optional
+
+"""
+Pay closer attention to the schedule of the DAG and whether it will clash with the hours per daily update, figure it out
+also look what happens in edge cases where the daily update is 12h but the dataset is missing only like 11 hours 
+
+"""
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
 LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , "dataset" ,Variable.get("DATASET_METADATA_NAME"))
@@ -18,12 +24,11 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
     return True
 
 @dag(
-     start_date = datetime(2024,1,1),
-     schedule =  "@daily",
-     tags = ["crypto_data"],
-     catchup = False,
-)
-
+     start_date = datetime(2024,1,1), #dag start date
+     schedule =  "@daily", #schedule between automatic dag runs
+     tags = ["crypto_data"], #tags to identify the dag
+     catchup = False, # catchup = True will make your dags execute automatically to make up for any missed runs, 
+)                     # better to leave this option as False to avoid problems
 def crypto_data_etl()->None:
     TOKEN = "BTC" #find a want to enable multiple tokens maybe?
     etl = CryptoDataETL(
@@ -110,14 +115,14 @@ def crypto_data_etl()->None:
                
         return csv_path, metadata_path #returns a tuple of 2 ObjectStoragePath
     
-    dataset_rows = check_dataset_num_rows()
-    path_branch = branch_on_dataset_size(dataset_rows) # type: ignore
-    create_dataset = get_first_dataset()
-    update_dataset = fill_existing_dataset()
-    write_from_new = write_df_to_file(create_dataset)  # type: ignore
-    write_from_existing = write_df_to_file(update_dataset) # type: ignore
+    dataset_rows = check_dataset_num_rows() #dataset_rows is an Xcom arg that holds the return val of the func
+    path_branch = branch_on_dataset_size(dataset_rows) # type: ignore using the rows parameters on the branch function to return the path                 
+    create_dataset = get_first_dataset()  #dataset funcs return an Xcom arg for the Dataset
+    update_dataset = fill_existing_dataset() 
+    write_from_new = write_df_to_file(create_dataset)  # type: ignore  write functions return a path for the cloud storage for the file write
+    write_from_existing = write_df_to_file(update_dataset) # type: ignore  
 
-    path_branch >> create_dataset  >> write_from_new
+    path_branch >> create_dataset  >> write_from_new #need to set-up dependencies  for both branches
     path_branch >> update_dataset >> write_from_existing
     
 crypto_data_etl()
