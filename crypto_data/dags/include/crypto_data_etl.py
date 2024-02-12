@@ -238,7 +238,7 @@ class CryptoDataETL():
     def __get_df_missing_hours(self,df: pd.DataFrame)->float:
         """
         Given a df, this function calculates how many hours of data are missing between the max amount of hours 
-        supposed to be in the dataset (set by an airflow env var) and the current amount of hours covered by the df rows.
+        supposed to be in the dataset (set by an class var) and the current amount of hours covered by the df rows.
 
         Args:
             df (pd.DataFrame): Pandas df representing the dataset
@@ -306,8 +306,8 @@ class CryptoDataETL():
         cur_unix_time:int = self.__seconds_to_unix(time.time())
         
         if df_missing_hours <= self.hours_between_daily_updates : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours: float = min(self.hours_between_daily_updates,self.max_time_frame_hours)
-
+            df_missing_hours: float = min(self.hours_between_daily_updates, self.max_time_frame_hours) #this case is only for test cases where max_time frame is very small for testing
+        #its sure that the amount of hours updated to a df is at minimum equivalent to  self.hours_between_daily_updates
         
         
         print(f" //// df missing hours {df_missing_hours} \n")
