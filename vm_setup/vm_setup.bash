@@ -1,7 +1,7 @@
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
-PYTHON_VERSION="3.9.16"
-AIRFLOW_VERSION="2.8.1"
-PROJECT_NAME="crypto_data"
+export PYTHON_VERSION="3.9.16"
+export AIRFLOW_VERSION="2.8.1"
+export PROJECT_NAME="crypto_data"
 #SCRIPT_DIR=
 #PARENT_DIR="${dirname "$script_dir"}"
 
@@ -12,7 +12,7 @@ yes | sudo dnf install git
 git clone https://github.com/caue-paiva/airflow_project -b vm_branch
 cd airflow_project/
 cd vm_setup/
-MAIN_WORK_DIR="${pwd}" #main dir we will use for the project, named vm_setup
+export MAIN_WORK_DIR="${pwd}" #main dir we will use for the project, named vm_setup
 
 python3 -m venv airflow_env
 source /airflow_env/bin/activate #we will need to activate this env to use the airflowctl command
