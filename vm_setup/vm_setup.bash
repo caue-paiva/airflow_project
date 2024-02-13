@@ -4,7 +4,8 @@ export PYTHON_VERSION="3.9.16"
 export AIRFLOW_VERSION="2.8.1"
 export PROJECT_NAME="crypto_data"
 export VENV_NAME="airflow_env"
-export MAIN_GIT_FOLDER="airflow_project"
+export MAIN_GIT_FOLDER=${HOME}/"airflow_project"
+export MAIN_WORK_DIR=${MAIN_GIT_FOLDER}/vm_setup/ #main dir we will use for the project, named vm_setup
 
 yes | sudo dnf update #update the system
 
@@ -15,7 +16,6 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   git clone https://github.com/caue-paiva/airflow_project -b vm_branch
   cd airflow_project/
   cd vm_setup/
-  export MAIN_WORK_DIR="$(pwd)" #main dir we will use for the project, named vm_setup
   
   python3 -m venv ${VENV_NAME}
   source /${VENV_NAME}/bin/activate #we will need to activate this env to use the airflowctl command
@@ -54,9 +54,7 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
 }
 
 function restart_airflow { #in case the VM already has the files, useful for AWS academy labs re-starting
-  cd ${HOME}/${MAIN_GIT_FOLDER}
-  cd vm_setup/
-  export MAIN_WORK_DIR="$(pwd)" #main dir we will use for the project, named vm_setup
+  cd ${MAIN_WORK_DIR}
   source /${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
 }
