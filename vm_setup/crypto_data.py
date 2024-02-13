@@ -36,7 +36,8 @@ def crypto_data_etl()->None:
         max_time_frame_hours=  float(Variable.get("MAX_TIME_FRAME_HOURS")),
         hours_between_daily_updates= int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES")),
         mins_per_row=  int(Variable.get("MINS_PER_ROW")),
-        )
+        max_batch_size_hours= float(Variable.get("MAX_BATCH_SIZE_HOURS"))
+    )
 
     @task(task_id = "check_dataset_num_rows")
     def check_dataset_num_rows()-> int:  #add a fallback in case the metadata doesnt exist
