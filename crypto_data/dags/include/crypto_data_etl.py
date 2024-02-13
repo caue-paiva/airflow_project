@@ -2,7 +2,6 @@ import logging.config,time,math
 import pandas as pd
 from .binance_api import binance_trading_volume , min_to_ms
 from datetime import datetime , timedelta
-from airflow.models import Variable
 from typing import Union, Optional
 
 """
@@ -93,17 +92,14 @@ class CryptoDataETL():
             cur_unix_time = end_unix_time
 
         for i in range(num_rows): #time window loop, each iteration adds a row to the df
-            row_timer:float = time.time()
           
             cur = crypto_token
-            api_return_time:float = time.time()
             data: Optional[dict] = binance_trading_volume(
                             time_window_min=self.mins_per_row,
                             end_unix_time= cur_unix_time,  # type: ignore
                             crypto_token= cur,
                             api_time_interval_ms= self.trade_api_time_interval
                     )
-            print(f"it took the time {time.time()- api_return_time} to get a return from api")
             if data == None: #in case the row data is incomplete, just skip that time frame 
                 continue
             
@@ -116,12 +112,10 @@ class CryptoDataETL():
                             data.get(f"{cur}_NET_FLOW",None),
                             data.get(f"{cur}_TOTAL_AGGRT_TRANSACTIONS",None)
                         ]
-            
             cur_unix_time  -= min_to_ms(self.mins_per_row)
             df.loc[i] = currency_data # type: ignore
             start_date -= timedelta(minutes=self.mins_per_row)
-            print(f"it took the time {time.time()- row_timer} to get a DF row")
-        
+
         if df.shape[0] == 0:
             self.__logger.info(f"Dataframe with end_unix_time of {end_unix_time} wasnt able to be processed")
             return None
@@ -271,7 +265,7 @@ class CryptoDataETL():
         to_add_data: float  = min(self.max_time_frame_hours, self.max_batch_size_hours )
         print(f"---- max batch size {self.max_batch_size_hours} ----\n")
         print(f" ---- Data size to add  {to_add_data}  ----- \n")
-        
+
         CHUNKS_OF_DATA:int = self.__get_num_chunks(to_add_data) #in how many data chunks we are going to split the extraction 
         hours_per_chunk: float = to_add_data/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
         print(f"chunks of data {CHUNKS_OF_DATA}")

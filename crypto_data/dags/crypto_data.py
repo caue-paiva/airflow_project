@@ -11,6 +11,11 @@ from typing import  Optional
 Pay closer attention to the schedule of the DAG and whether it will clash with the hours per daily update, figure it out
 also look what happens in edge cases where the daily update is 12h but the dataset is missing only like 11 hours 
 
+Stats for extraction speed:
+
+Rows per min: ~187 
+
+
 """
 
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project

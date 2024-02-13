@@ -57,9 +57,7 @@ def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,
     
     total_transactions:int = 0
     requests_hitting_limit:int = 0 #number of requests hitting the 1000 responses API limit
-    final_price_timer:float = time.time()
     final_price: Optional[float] = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms= api_time_interval_ms) #price of the crypto token at the latest date in the timeframe
-    print(f"final price took {time.time()- final_price_timer} ")
     if final_price == None:
          return None 
 
@@ -69,7 +67,6 @@ def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,
     total_buy_usd:float  = 0.0
     
     for i in range(requests_needed):
-        request_timer:float = time.time()
         params:dict = {
             "symbol": crypto_token,
             "startTime" : end_time - MAX_REQUEST_TIMEFRAME,  #em ms , a maior janela que chega perto do limite de 1000 respostas é 90000 ms
@@ -101,17 +98,11 @@ def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,
                     total_buy_usd += quantity * price 
 
         end_time -= MAX_REQUEST_TIMEFRAME
-        print(f"it took the time {time.time()- request_timer} for a binance api request")
     print(f"a total of {requests_needed} api requests is needed")
-    start_timer: float = time.time()
     start_price: Optional[float] = __binance_crypto_price(symbol=crypto_token,end_time_unix=end_time, api_time_interval_ms = api_time_interval_ms) #price of the crypto token at the earliest date in the timeframe
-    print(f"start price took {time.time() - start_timer}")
     if start_price == None:
          return None 
-    
-    #if requests_hitting_limit/requests_needed > 0.5:
-        #  print("More than half of requests are hitting the binance API rate limit")
-    print(f"the binan api func took {time.time()-bin_api_func}")
+
     return {
             f"{crypto_token}_START_PRICE": start_price, 
             f"{crypto_token}_END_PRICE": final_price, 
