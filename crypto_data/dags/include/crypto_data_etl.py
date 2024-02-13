@@ -16,14 +16,16 @@ max time of 1.5 years should take 126 hours to complete (5.2 days)
 class CryptoDataETL():
     
     SUPPORTED_CRYPTO_TOKENS:set[str] = {"BTC", "ETH", "SOL"}
+    DATA_CHUNK_NUM_ROWS: int = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
 
     crypto_token: str
     max_time_frame_hours: float  #how far back will data be collected in hours, equivalent to 2,75 years 
     hours_between_daily_updates: int #how many hours are there to be between each daily update of the dataset 
     mins_per_row:int  #how many minutes of data does each row represent
     trade_api_time_interval: int #in ms, the time window for getting aggregated transaction data
-    data_chunk_num_rows:int #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
+    max_batch_size_hours: float #how many hours at max can a run of a dag add to the dataset, this optional var was created due to limitations regarding AWS academy labs
     max_row_num :int #max number of rows for the CSV
+    
     __logger: logging.Logger
     
     def __init__(self,
@@ -33,8 +35,8 @@ class CryptoDataETL():
         mins_per_row:int,
         enable_logs:bool = True,
         trade_api_time_interval: int = 100000,
-        data_chunk_num_rows:int = 10000
-        )->None:
+        max_batch_size_hours: float = 1e10
+    )->None:
 
         if crypto_token not in self.SUPPORTED_CRYPTO_TOKENS:
            raise IOError("Crypo token name not supported")
@@ -48,9 +50,8 @@ class CryptoDataETL():
         self.hours_between_daily_updates: int = hours_between_daily_updates
         self.mins_per_row:int = mins_per_row
         self.trade_api_time_interval: int = trade_api_time_interval
-        self.data_chunk_num_rows:int = data_chunk_num_rows
         self.max_row_num :int = math.ceil((self.max_time_frame_hours* 60)/ self.mins_per_row)
-    
+        self.max_batch_size_hours = max_batch_size_hours
     def __create_crypto_dataframe(self, time_frame_hours: Union[int,float],crypto_token: str, end_unix_time:int = 0)-> Optional[pd.DataFrame]: 
         """
         Method that returns a pd Dataframe or None (if no data was able to be returned) with each column being data about price , trading volume
@@ -182,7 +183,7 @@ class CryptoDataETL():
         return int(seconds*1000)
 
     def __get_num_chunks(self,time_frame_hours:float)->int:
-        rows_per_chunk:int = self.data_chunk_num_rows
+        rows_per_chunk:int = self.DATA_CHUNK_NUM_ROWS
         hours_per_chunk:int= math.ceil(rows_per_chunk/12) #12 rows make up 1 hour, since each row = 5min of data
         chunks:int = math.ceil(time_frame_hours/hours_per_chunk)
         if chunks <= 0:
@@ -267,9 +268,12 @@ class CryptoDataETL():
         Return -> (pd.DataFrame) Dataset filled with the amount of data for the period specified in the env variable
                 
         """
-
-        CHUNKS_OF_DATA:int = self.__get_num_chunks(self.max_time_frame_hours) #in how many data chunks we are going to split the extraction 
-        hours_per_chunk: float = self.max_time_frame_hours/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
+        to_add_data: float  = min(self.max_time_frame_hours, self.max_batch_size_hours )
+        print(f"---- max batch size {self.max_batch_size_hours} ----\n")
+        print(f" ---- Data size to add  {to_add_data}  ----- \n")
+        
+        CHUNKS_OF_DATA:int = self.__get_num_chunks(to_add_data) #in how many data chunks we are going to split the extraction 
+        hours_per_chunk: float = to_add_data/CHUNKS_OF_DATA #how many hours of data are covered by each chunk
         print(f"chunks of data {CHUNKS_OF_DATA}")
         cur_unix_time:int = self.__seconds_to_unix(time.time())
 
@@ -301,16 +305,18 @@ class CryptoDataETL():
             raise TypeError("Input param df isnt of type Pandas Dataframe")
 
         df_missing_hours:float = self.__get_df_missing_hours(df) #how many hours are missing from the df if compared to the max hours the dataset is supposed to cover
-        
-        
         cur_unix_time:int = self.__seconds_to_unix(time.time())
+
+        df_missing_hours = min(  #the hours we will add need to be the minimum between these 3 values
+                    self.max_time_frame_hours,  #if the max capacity of the data is the smallest var, we need to follow it
+                    df_missing_hours,           # hours to reach top capacity
+                    self.max_batch_size_hours   #max batch size we can process in a single dag run
+        )
         
         if df_missing_hours <= self.hours_between_daily_updates : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours: float = min(self.hours_between_daily_updates, self.max_time_frame_hours) #this case is only for test cases where max_time frame is very small for testing
-        #its sure that the amount of hours updated to a df is at minimum equivalent to  self.hours_between_daily_updates
-        
-        
-        print(f" //// df missing hours {df_missing_hours} \n")
+            df_missing_hours: float = self.hours_between_daily_updates 
+        print(f"---- max batch size {self.max_batch_size_hours}  ----\n")
+        print(f"---- df missing hours {df_missing_hours} ----\n")
         num_of_chunks: int = self.__get_num_chunks(df_missing_hours)
         hours_per_chunk:float = df_missing_hours/num_of_chunks
             
