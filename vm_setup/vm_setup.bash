@@ -1,4 +1,5 @@
 # by default user-data scripts only run when an EC2 instance is started for the first time, its possible to change that but it requires re-starting an instance, so that isnt a priority currently
+#user data scripts are run as the root user by default
 ## for more info https://repost.aws/pt/knowledge-center/execute-user-data-ec2 
 
 
