@@ -1,0 +1,10 @@
+"aws_default": {
+    "conn_type": "aws",
+    "description": "",
+    "login": "ACESS_KEY_ID",
+    "password": "SECRET_ACESS_KEY",
+    "host": "",
+    "port": null,
+    "schema": "",
+    "extra": "{\"aws_acess_key_id\": \"ACESS_KEY_ID\", \"aws_secret_acess_key\": \"SECRET_ACESS_KEY\", \"region_name\": \"YOUR_REGION\"}"
+  }
