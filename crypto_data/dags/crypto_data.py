@@ -17,11 +17,13 @@ Rows per min: ~187
 
 
 """
-
+SUPPORTED_TOKENS: set[str] = {"BTC", "SOL", "ETH"}
+DATASET_METADATA_FILENAME = Variable.get("DATASET_METADATA_NAME")
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
-LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH ,Variable.get("DATASET_METADATA_NAME"))
+LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , DATASET_METADATA_FILENAME)
 S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
-DATASET_METADATA_FILENAME = "dataset_metadata.json"
+MIN_PER_ROW: int = int(Variable.get("MINS_PER_ROW"))
+
 
 def save_metadata_locally(metadata_json:list[dict])->bool:
     with open(LOCAL_METADATA_PATH, "w") as f:
@@ -32,15 +34,15 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
      start_date = datetime(2024,1,1), #dag start date
      schedule =  "@daily", #schedule between automatic dag runs
      tags = ["crypto_data"], #tags to identify the dag
-     catchup = False, # catchup = True will make your dags execute automatically to make up for any missed runs, 
-)                     # better to leave this option as False to avoid problems
+     catchup = False, # catchup = True will make your dags execute automatically to make up for any missed runs, better to leave this option as False to avoid problems
+)                     
 def crypto_data_etl()->None:
-    TOKEN = "BTC" #find a want to enable multiple tokens maybe?
+    TOKEN = "BTC" #find a way to enable multiple tokens maybe?
     etl = CryptoDataETL(
         crypto_token = TOKEN,
         max_time_frame_hours=  float(Variable.get("MAX_TIME_FRAME_HOURS")),
         hours_between_daily_updates= int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES")),
-        mins_per_row=  int(Variable.get("MINS_PER_ROW")),
+        mins_per_row=  MIN_PER_ROW,
         max_batch_size_hours= float(Variable.get("MAX_BATCH_SIZE_HOURS"))
     )
 
@@ -59,7 +61,7 @@ def crypto_data_etl()->None:
                     if in_token.get("crypto_token") == TOKEN: #if we find the correct token
                         if not in_token.get("dataset_exists"): #if dataset doesnt exist already return -1 rows
                             save_metadata_locally(metadata) #save s3 file locally for ease of acess from other funcs
-                            print("found s3 bucket but there was no metadata")
+                            print("found s3 bucket but metadata said there was no dataset")
                             return -1
                         num_rows: Optional[int] = in_token.get("number_of_rows", None) #get the number of rows
                         if num_rows == None:
@@ -72,12 +74,17 @@ def crypto_data_etl()->None:
              #in case the s3 doesnt have a metadata file, we need to create one locally  with all values set to zero
              with open(LOCAL_METADATA_PATH, "w") as f:
                 initial_template = [
-                                     {"crypto_token": "BTC","dataset_exists": False, "number_of_rows": 0},                                        
-                                     {"crypto_token": "ETH", "dataset_exists": False,"number_of_rows": 0},                                       
-                                     {"crypto_token": "SOL", "dataset_exists": False, "number_of_rows": 0}
+                                     {
+                                        "crypto_token": f"{x}",
+                                        "dataset_exists": False, 
+                                        "number_of_rows": 0,
+                                        "most_recent_data": "",
+                                        "oldest_data": "",
+                                        "total_hours_covered": 0
+                                      } for x in SUPPORTED_TOKENS
                                    ]
                 json.dump(initial_template, f)
-             print("didnt find s3 bucket")
+             print("didnt find metadata in s3 bucket")
              return -1 
        
     @task.branch(task_id = "branch_on_dataset_size") #branches the DAG based the dataset existing or not
@@ -93,7 +100,7 @@ def crypto_data_etl()->None:
     
     @task(task_id= "fill_existing_dataset")
     def fill_existing_dataset()->pd.DataFrame:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA.csv"
+        csv_path = S3_BUCKET / f"{TOKEN}_DATA_LOCAL.csv"
         with csv_path.open("rb") as f: #reads existing csv to a df
             df = pd.read_csv(f)
 
@@ -101,10 +108,13 @@ def crypto_data_etl()->None:
     
     @task(task_id = "write_df_to_file") #ds is a dag parameter for current date
     def write_df_to_file(df:pd.DataFrame)-> tuple[ObjectStoragePath, ObjectStoragePath]:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA.csv"
+        csv_path = S3_BUCKET / f"{TOKEN}_DATA_LOCAL.csv"
         metadata_path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
         num_rows:int = df.shape[0] #get number of rows in dataframe
+        most_recent_data: str = str(df.at[0,"DATE"])
+        oldest_data: str = str(df.at[ (num_rows-1) ,"DATE"])
+        hours_covered: float = (num_rows * MIN_PER_ROW)/60
         
         with csv_path.open("wb") as f:
             df.to_csv(f,index=False) #saves CSV on S3
@@ -115,6 +125,9 @@ def crypto_data_etl()->None:
                 if in_token.get("crypto_token") == TOKEN: #if we find the correct token
                        in_token["dataset_exists"] = True #change the list of dicts from the json with the new row num
                        in_token["number_of_rows"] = num_rows
+                       in_token["most_recent_data"] = most_recent_data
+                       in_token["oldest_data"] =  oldest_data
+                       in_token["total_hours_covered"] = hours_covered
                        break
             else:
                 raise Exception("Didnt find the correct token in the JSON file")

@@ -2,7 +2,7 @@
     {
         "crypto_token": "BTC",
         "dataset_exists": true,
-        "number_of_rows": 36
+        "number_of_rows": 24000
     },
     {
         "crypto_token": "ETH",

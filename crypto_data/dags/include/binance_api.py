@@ -73,13 +73,12 @@ def binance_trading_volume(time_window_min: Union[int,float] , crypto_token:str,
             "endTime":    end_time,
             "limit" : 1000
         }
-        print("waiting response")
+      
         response: requests.Response = requests.get("https://api.binance.us/api/v3/aggTrades", params=params)
         if response.status_code == 200:
                 json_result:list[dict] = response.json()
         else:
                 return None 
-        print("got response")
         num_transactions:int = len(json_result)
         total_transactions += num_transactions
     

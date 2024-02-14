@@ -306,9 +306,10 @@ class CryptoDataETL():
                     df_missing_hours,           # hours to reach top capacity
                     self.max_batch_size_hours   #max batch size we can process in a single dag run
         )
+
+        if (df_missing_hours - 0.0) <= 1e-2: # if df missing hours is less than or eq to 0.01  hours raise error
+            raise Exception("df_missing_hours is zero")
         
-        if df_missing_hours <= self.hours_between_daily_updates : #in case the amount of missing hours is less than covered in a daily update, we will do a daily update
-            df_missing_hours: float = self.hours_between_daily_updates 
         print(f"---- max batch size {self.max_batch_size_hours}  ----\n")
         print(f"---- df missing hours {df_missing_hours} ----\n")
         num_of_chunks: int = self.__get_num_chunks(df_missing_hours)
