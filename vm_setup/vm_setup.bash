@@ -4,36 +4,38 @@
 
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
 # OBS: remenber to open up a custom TCP port with all IPs allowed at port 8080 on the EC2 instance to connect to the airflow UI remotely  
+export USER="ec2-user" #we need to execute commands that create files as the user and not root to avoid ownership and acess issues
+export HOME_="/home/"${USER} #because user data scripts on EC2 run as root user, we need to setup a var that makes sure everything we do is in the ec2-user home
 export PYTHON_VERSION="3.9.16"
 export AIRFLOW_VERSION="2.8.1"
 export PROJECT_NAME="crypto_data"
 export VENV_NAME="airflow_env"
-export MAIN_GIT_FOLDER=${HOME}/"airflow_project"
+export MAIN_GIT_FOLDER=${HOME_}/"airflow_project"
 export MAIN_WORK_DIR=${MAIN_GIT_FOLDER}/vm_setup/ #main dir we will use for the project, named vm_setup
 
 yes | sudo dnf update #update the system
-touch ${HOME}/vm_start_logs.log
+sudo -u ${USER} touch ${HOME_}/vm_start_logs.log
 
 function start_vm_anew {  #in case the VM is brand new and has no data, so we must setup it from start
   yes | sudo dnf install python3-pip #install python and git, [ yes | ] answers any prompt to the command with yes 
   yes | sudo dnf install git
   
-  git clone https://github.com/caue-paiva/airflow_project -b vm_branch
+  sudo -u ${USER} git clone https://github.com/caue-paiva/airflow_project -b vm_branch
   cd ${MAIN_WORK_DIR}
   
-  python3 -m venv ${VENV_NAME}
+  sudo -u ${USER} python3 -m venv ${VENV_NAME}
   source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate #we will need to activate this env to use the airflowctl command
-  pip install -r _requirements.txt
+  sudo -u ${USER} pip install -r _requirements.txt
   export VENV_PATH=${MAIN_WORK_DIR}/${VENV_NAME}
   
-  airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} ----venv_path ${VENV_PATH} #inits the airflowctl project 
+  sudo -u ${USER} airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} ----venv_path ${VENV_PATH} #inits the airflowctl project 
   cd ${PROJECT_NAME}
-  airflowctl build #builds project 
+  sudo -u ${USER} airflowctl build #builds project 
   cd ..
-  airflowctl start ${PROJECT_NAME} --background 
+  sudo -u ${USER} airflowctl start ${PROJECT_NAME} --background 
   
   cd ${PROJECT_NAME}/dags/ 
-  mkdir include #creating folder for python code not used by the dags
+  sudo -u ${USER} mkdir include #creating folder for python code not used by the dags
   cd ..
   cd ..
   
@@ -43,11 +45,11 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   mv aws_connection_setup.json ${PROJECT_NAME}/
   
   cd ${PROJECT_NAME}
-  airflowctl airflow variables import variables_setup.json #setting up airflow env variables
+  sudo -u ${USER} airflowctl airflow variables import variables_setup.json #setting up airflow env variables
   if [ $? == 0 ]; then
-      echo "Start and setup sucessful" >> ${HOME}/vm_start_logs.log
+      echo "Start and setup sucessful" >> ${HOME_}/vm_start_logs.log
   else
-      echo "Start and setup  unsucessful" >> ${HOME}/vm_start_logs.log
+      echo "Start and setup  unsucessful" >> ${HOME_}/vm_start_logs.log
   fi
 
   # now its time to edit the aws_connection_setup.json file with your aws account/IAM identity acess key ID and secret acess keys
@@ -72,16 +74,16 @@ function restart_airflow { #in case the VM already has the files, useful for AWS
   source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
   if [ $? == 0 ]; then
-      echo "Restart sucessful" >> ${HOME}/vm_start_logs.log
+      echo "Restart sucessful" >> ${HOME_}/vm_start_logs.log
   else
-      echo "Restart unsucessful" >> ${HOME}/vm_start_logs.log
+      echo "Restart unsucessful" >> ${HOME_}/vm_start_logs.log
   fi
 }
 
 if [ -d "${MAIN_GIT_FOLDER}" ]; then
-  echo "Directory exists." >> ${HOME}/vm_start_logs.log
+  sudo -u ${USER} echo "Directory exists." >> ${HOME_}/vm_start_logs.log
   restart_airflow #runs restart func
 else
-  echo "Directory does not exist." >> ${HOME}/vm_start_logs.log
+  sudo -u ${USER} echo "Directory does not exist." >> ${HOME_}/vm_start_logs.log
   start_vm_anew  #runs setting up from scratch func
 fi
