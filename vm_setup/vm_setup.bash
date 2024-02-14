@@ -1,3 +1,7 @@
+# by default user-data scripts only run when an EC2 instance is started for the first time, its possible to change that but it requires re-starting an instance, so that isnt a priority currently
+## for more info https://repost.aws/pt/knowledge-center/execute-user-data-ec2 
+
+
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
 # OBS: remenber to open up a custom TCP port with all IPs allowed at port 8080 on the EC2 instance to connect to the airflow UI remotely  
 export PYTHON_VERSION="3.9.16"
