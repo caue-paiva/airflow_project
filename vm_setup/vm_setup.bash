@@ -36,6 +36,8 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   mv binance_api.py crypto_data_etl.py ${PROJECT_NAME}/dags/include/  #move auxiliary python files to include folder
   mv crypto_data.py ${PROJECT_NAME}/dags/ #move main dag file to dag folder
   mv variables_setup.json ${PROJECT_NAME}/  #moves json file that setups the env variables to inside the project
+  mv aws_connection_setup.json ${PROJECT_NAME}/
+  
   cd ${PROJECT_NAME}
   airflowctl airflow variables import variables_setup.json #setting up airflow env variables
   if [ $? == 0 ]; then
@@ -43,6 +45,10 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   else
       echo "Start and setup  unsucessful" >> ${HOME}/vm_start_logs.log
   fi
+
+  # now its time to edit the aws_connection_setup.json file with your aws account/IAM identity acess key ID and secret acess keys
+  # then run the command (inside the airflowctl project folder): 
+  # airflowctl airflow connection import aws_connection_setup.json
   
   #13140 hours is equivalent to 1,5 years
   
