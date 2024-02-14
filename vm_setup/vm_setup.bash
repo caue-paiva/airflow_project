@@ -28,7 +28,7 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   sudo -u ${USER} pip install -r _requirements.txt
   export VENV_PATH=${MAIN_WORK_DIR}/${VENV_NAME}
   
-  sudo -u ${USER} airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} ----venv_path ${VENV_PATH} #inits the airflowctl project 
+  sudo -u ${USER} airflowctl init ${PROJECT_NAME} --airflow-version ${AIRFLOW_VERSION} --python-version ${PYTHON_VERSION} --venv_path ${VENV_PATH} #inits the airflowctl project 
   cd ${PROJECT_NAME}
   sudo -u ${USER} airflowctl build #builds project 
   cd ..
