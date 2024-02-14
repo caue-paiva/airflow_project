@@ -75,9 +75,9 @@ function restart_airflow { #in case the VM already has the files, useful for AWS
   source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
   if [ $? == 0 ]; then
-      echo "Restart sucessful" >> ${HOME_}/vm_start_logs.log
+      sudo -u ${USER} echo "Restart sucessful" >> ${HOME_}/vm_start_logs.log
   else
-      echo "Restart unsucessful" >> ${HOME_}/vm_start_logs.log
+      sudo -u ${USER} echo "Restart unsucessful" >> ${HOME_}/vm_start_logs.log
   fi
 }
 
