@@ -1,10 +1,34 @@
-# by default user-data scripts only run when an EC2 instance is started for the first time, its possible to change that but it requires re-starting an instance, so that isnt a priority currently
+# this file is supposed to be copy-pasted into user data section at EC2 launch or config
+# by default user-data scripts only run when an EC2 instance is started for the first time
 #user data scripts are run as the root user by default
-## for more info https://repost.aws/pt/knowledge-center/execute-user-data-ec2 
-
+# to make scripts run everytime an instance is restarted, aditional info needs to be added to the user-data besides the bash script
+# for more info https://repost.aws/pt/knowledge-center/execute-user-data-ec2 
 
 #amazon linux 2023 is based on a fedora distro so commands are based on that 
 # OBS: remenber to open up a custom TCP port with all IPs allowed at port 8080 on the EC2 instance to connect to the airflow UI remotely  
+
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
+
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
+
+#!/bin/bash
+#below is the script that will be executed everytime the instance is launched or re-started
+
 export USER="ec2-user" #we need to execute commands that create files as the user and not root to avoid ownership and acess issues
 export HOME_="/home/"${USER} #because user data scripts on EC2 run as root user, we need to setup a var that makes sure everything we do is in the ec2-user home
 export PYTHON_VERSION="3.9.16"
@@ -52,14 +76,12 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   else
       echo "Start and setup  unsucessful" >> ${HOME_}/vm_start_logs.log
   fi
+ 
+  #--connections
 
   # now its time to edit the aws_connection_setup.json file with your aws account/IAM identity acess key ID and secret acess keys
   # then run the command (inside the airflowctl project folder): 
   # airflowctl airflow connection import aws_connection_setup.json
-  
-  #13140 hours is equivalent to 1,5 years
-  
-  #--connections
   
   # 1} export all connections to a file using airflowctl airflow connections export ${file}, needs to be inside airflowctl project folder
   
@@ -88,3 +110,5 @@ else
   sudo -u ${USER} echo "Directory does not exist." >> ${HOME_}/vm_start_logs.log
   start_vm_anew  #runs setting up from scratch func
 fi
+
+--//--
