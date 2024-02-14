@@ -8,17 +8,17 @@ export MAIN_GIT_FOLDER=${HOME}/"airflow_project"
 export MAIN_WORK_DIR=${MAIN_GIT_FOLDER}/vm_setup/ #main dir we will use for the project, named vm_setup
 
 yes | sudo dnf update #update the system
+touch ${HOME}/vm_start_logs.log
 
 function start_vm_anew {  #in case the VM is brand new and has no data, so we must setup it from start
   yes | sudo dnf install python3-pip #install python and git, [ yes | ] answers any prompt to the command with yes 
   yes | sudo dnf install git
   
   git clone https://github.com/caue-paiva/airflow_project -b vm_branch
-  cd airflow_project/
-  cd vm_setup/
+  cd ${MAIN_WORK_DIR}
   
   python3 -m venv ${VENV_NAME}
-  source /${VENV_NAME}/bin/activate #we will need to activate this env to use the airflowctl command
+  source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate #we will need to activate this env to use the airflowctl command
   pip install -r _requirements.txt
   export VENV_PATH=${MAIN_WORK_DIR}/${VENV_NAME}
   
@@ -38,6 +38,11 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   mv variables_setup.json ${PROJECT_NAME}/  #moves json file that setups the env variables to inside the project
   cd ${PROJECT_NAME}
   airflowctl airflow variables import variables_setup.json #setting up airflow env variables
+  if [ $? == 0 ]; then
+      echo "Start and setup sucessful" >> ${HOME}/vm_start_logs.log
+  else
+      echo "Start and setup  unsucessful" >> ${HOME}/vm_start_logs.log
+  fi
   
   #13140 hours is equivalent to 1,5 years
   
@@ -49,7 +54,6 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   
   # 3} Import the connections file using airflowctl airflow connections import ${file}
   
-  
   # You can setup the connections on airflow UI, but remenber to not only put the JSON but also to fill the bars with the keys above the extra camp
 }
 
@@ -57,13 +61,18 @@ function restart_airflow { #in case the VM already has the files, useful for AWS
   cd ${MAIN_WORK_DIR}
   source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
+  if [ $? == 0 ]; then
+      echo "Restart sucessful" >> ${HOME}/vm_start_logs.log
+  else
+      echo "Restart unsucessful" >> ${HOME}/vm_start_logs.log
+  fi
 }
 ## create bash functions to represent either a start from anew (no new files) or just re-starting an instance
 
-if [ -d "${HOME}/${MAIN_GIT_FOLDER}" ]; then
-  echo "Directory exists."
+if [ -d "${MAIN_GIT_FOLDER}" ]; then
+  echo "Directory exists." >> ${HOME}/vm_start_logs.log
   restart_airflow #runs restart func
 else
-  echo "Directory does not exist."
+  echo "Directory does not exist." >> ${HOME}/vm_start_logs.log
   start_vm_anew  #runs setting up from scratch func
 fi
