@@ -55,7 +55,7 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
 
 function restart_airflow { #in case the VM already has the files, useful for AWS academy labs re-starting
   cd ${MAIN_WORK_DIR}
-  source /${VENV_NAME}/bin/activate
+  source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
 }
 ## create bash functions to represent either a start from anew (no new files) or just re-starting an instance
