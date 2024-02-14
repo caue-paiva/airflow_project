@@ -73,7 +73,6 @@ function restart_airflow { #in case the VM already has the files, useful for AWS
       echo "Restart unsucessful" >> ${HOME}/vm_start_logs.log
   fi
 }
-## create bash functions to represent either a start from anew (no new files) or just re-starting an instance
 
 if [ -d "${MAIN_GIT_FOLDER}" ]; then
   echo "Directory exists." >> ${HOME}/vm_start_logs.log
