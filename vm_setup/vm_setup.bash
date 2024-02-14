@@ -41,9 +41,9 @@ function start_vm_anew {  #in case the VM is brand new and has no data, so we mu
   cd ${PROJECT_NAME}
   airflowctl airflow variables import variables_setup.json #setting up airflow env variables
   if [ $? == 0 ]; then
-      echo "Start and setup sucessful" >> ${HOME}/vm_start_logs.log
+      echo "Start and setup sucessful\n" >> ${HOME}/vm_start_logs.log
   else
-      echo "Start and setup  unsucessful" >> ${HOME}/vm_start_logs.log
+      echo "Start and setup  unsucessful\n" >> ${HOME}/vm_start_logs.log
   fi
 
   # now its time to edit the aws_connection_setup.json file with your aws account/IAM identity acess key ID and secret acess keys
@@ -68,16 +68,16 @@ function restart_airflow { #in case the VM already has the files, useful for AWS
   source ${MAIN_WORK_DIR}/${VENV_NAME}/bin/activate
   airflowctl start ${PROJECT_NAME}/ --background
   if [ $? == 0 ]; then
-      echo "Restart sucessful" >> ${HOME}/vm_start_logs.log
+      echo "Restart sucessful\n" >> ${HOME}/vm_start_logs.log
   else
-      echo "Restart unsucessful" >> ${HOME}/vm_start_logs.log
+      echo "Restart unsucessful\n" >> ${HOME}/vm_start_logs.log
   fi
 }
 
 if [ -d "${MAIN_GIT_FOLDER}" ]; then
-  echo "Directory exists." >> ${HOME}/vm_start_logs.log
+  echo "Directory exists.\n" >> ${HOME}/vm_start_logs.log
   restart_airflow #runs restart func
 else
-  echo "Directory does not exist." >> ${HOME}/vm_start_logs.log
+  echo "Directory does not exist.\n" >> ${HOME}/vm_start_logs.log
   start_vm_anew  #runs setting up from scratch func
 fi
