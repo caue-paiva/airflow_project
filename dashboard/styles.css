@@ -1,0 +1,67 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    font-family: "Arial, sans-serif";
+    background-color: #1e2130;
+    color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    font-size: 30px;
+    color: #00FFFF;
+    text-align: center;
+    padding: 20px 0;
+    flex: 0 0 auto; /* Do not grow or shrink */
+}
+
+.content {
+    flex-grow: 1;
+    display: flex;
+}
+
+.box {
+    display: flex;
+    width: 100%;
+    background-color: #3136aa;
+    align-items: stretch; /* This will stretch the child elements */
+}
+
+.token {
+    flex-basis: 50%; /* Each token takes half the width of the box */
+    display: flex;
+    flex-direction: column;
+    padding: 20px; /* Add padding inside each token box */
+}
+
+.title {
+    font-size: 28px;
+    margin-bottom: 20px; /* Margin bottom for title */
+}
+
+.data {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* Aligns the content to the top */
+}
+
+.data-point {
+    font-size: 22px;
+    margin: 20px 0; /* Increased margin to space out the data points */
+}
+
+@media (max-width: 768px) {
+    .box {
+        flex-direction: column;
+    }
+
+    .token {
+        flex-basis: 100%; /* Each token takes full width of the box */
+    }
+
+    .data-point {
+        text-align: center;
+    }
+}

@@ -23,7 +23,7 @@ CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this ret
 LOCAL_METADATA_PATH: str = os.path.join(CUR_DIR_PATH , DATASET_METADATA_FILENAME)
 S3_BUCKET =  ObjectStoragePath("s3://airflow-crypto-data", conn_id="aws_default")
 MIN_PER_ROW: int = int(Variable.get("MINS_PER_ROW"))
-
+S3_DATASET_NAME: str = Variable.get("S3_DATASET_NAME")
 
 def save_metadata_locally(metadata_json:list[dict])->bool:
     with open(LOCAL_METADATA_PATH, "w") as f:
@@ -100,7 +100,7 @@ def crypto_data_etl()->None:
     
     @task(task_id= "fill_existing_dataset")
     def fill_existing_dataset()->pd.DataFrame:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA_LOCAL.csv"
+        csv_path = S3_BUCKET / f"{TOKEN}{S3_DATASET_NAME}"
         with csv_path.open("rb") as f: #reads existing csv to a df
             df = pd.read_csv(f)
 
@@ -108,7 +108,7 @@ def crypto_data_etl()->None:
     
     @task(task_id = "write_df_to_file") #ds is a dag parameter for current date
     def write_df_to_file(df:pd.DataFrame)-> tuple[ObjectStoragePath, ObjectStoragePath]:
-        csv_path = S3_BUCKET / f"{TOKEN}_DATA_LOCAL.csv"
+        csv_path = S3_BUCKET / f"{TOKEN}{S3_DATASET_NAME}"
         metadata_path = S3_BUCKET/ DATASET_METADATA_FILENAME
 
         num_rows:int = df.shape[0] #get number of rows in dataframe

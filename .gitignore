@@ -2,3 +2,4 @@ airflow_env
 .vscode
 test.py
 debug.csv
+dashboard_env
