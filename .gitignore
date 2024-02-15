@@ -3,3 +3,5 @@ airflow_env
 test.py
 debug.csv
 dashboard_env
+dashboard/plotly_output.html
+dashboard/plotly_output2.html
