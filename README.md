@@ -44,7 +44,7 @@ These are functions that get **data from the binance API**, like Crypto Token pr
 
 **CryptoDataETL class (../crypto_data/dags/include/crypto_data_etl.py)**
 
-This class uses the above functions to **coordinate the extraction of pandas dataframes out of the API data**, with parameters such as Max hours of data that the dataset can have, how many mins should be covered by each rows among others. This function provides 2 main public interfaces, **one function for creating a dataset** from scratch and one for **updating an existing dataset** with more and/or newer data.
+This class uses the above functions to **coordinate the extraction of Pandas Dataframes out of the API data**, with parameters such as Max hours of data that the dataset can have, how many mins should be covered by each rows among others. This function provides 2 main public interfaces, **one function for creating a dataset** from scratch and one for **updating an existing dataset** with more and/or newer data.
 
 **Airflow DAG for orchestrating the ETL pipeline (../crypto_data/dags/crypto_data.py)**
 
