@@ -96,7 +96,7 @@ This is to be done manually due to security reasons related to the AWS account a
 
 
 
-:br:
+:brazil:
 
 Este projeto visa **coletar e atualizar dados sobre Tokens de Criptomoedas como Bitcoin e Ethereum** (no futuro também Solana) na forma de arquivos CSV cobrindo grandes períodos de dados do mercado coletados da [API da Binance US](https://docs.binance.us/#introduction).
 
