@@ -8,7 +8,7 @@ Data collected includes:
 
 * **Token price**
 
-* **Tokens Bought and sold**
+* **Tokens bought and sold**
 
 * **Number of aggregate transactions.** (transactions of the same token and same price are aggregated together)
 
@@ -19,7 +19,7 @@ All that in slices of 5 minutes of data each.
 
 ## Accessing the data 
 
-* Dataset statistics (preview of the CSV and info like how many rows are there in file and how many hours are covered) can be acessed  [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
+* Dataset statistics (preview of the CSV and info like how many rows are there in the file and how many hours are covered) can be accessed  [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
 
 * Bitcoin dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
@@ -71,7 +71,7 @@ bash local_setup.bash
 **5) Follow instructions on file to add AWS connections to Airflow with AWS access ID and secret access keys.**
 This is to be done manually due to security reasons related to the AWS account and services
 
-**6) To acess Airflow UI just connect to Localhost 8080.**
+**6) To access Airflow UI just connect to Localhost 8080.**
 
 <br>
 
@@ -80,13 +80,13 @@ This is to be done manually due to security reasons related to the AWS account a
 
 **1) create an EC2 instance, choose model with at least 2gb of RAM.**
 
-**1.1) Either during creating of after, open a custom TCP connection with all traffic allowed on port 8080 (for connecting to airflow UI).**
+**1.1) Either during creating of after, open a custom TCP connection with all traffic allowed on port 8080 (for connecting to Airflow UI).**
 
-**1.2) Edit the "user-data" config on the EC2 instance and copy and paste the "vm_setup.bash" file from the project_setup/ foler on the "user-data" space.**
+**1.2) Edit the "user-data" config on the EC2 instance and copy and paste the "vm_setup.bash" file from the project_setup/ folder on the "user-data" space.**
 
 **2) Launch instance.**
 
-**3) Wait for a bit and see if installation and start of the airflow project was sucessful.**
+**3) Wait for a bit and see if installation and start of the airflow project was successful.**
 
 **4) Follow instructions on file to add AWS connections to Airflow with AWS access ID and secret access keys.**
 This is to be done manually due to security reasons related to the AWS account and services
