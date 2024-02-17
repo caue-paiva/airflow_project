@@ -74,8 +74,7 @@ This is to be done manually due to security reasons related to the AWS account a
 **6) To acess Airflow UI just connect to Localhost 8080.**
 
 <br>
-<br>
-<br>
+
 
 ### To run the project on EC2 instances:
 
@@ -92,7 +91,8 @@ This is to be done manually due to security reasons related to the AWS account a
 **4) Follow instructions on file to add AWS connections to Airflow with AWS access ID and secret access keys.**
 This is to be done manually due to security reasons related to the AWS account and services
 
-**5) To access the Airflow UI, connect to the DNS URL of the instance on port 8080 (something like `{instance-dns-url}:8080`).**
+**5) To access the Airflow UI, connect to the DNS URL of the instance on port 8080** 
+(Connection url should look like `{instance-dns-url}:8080`).
 
 
 
