@@ -48,6 +48,8 @@ This class uses the above functions to **coordinate the extraction of Pandas Dat
 This DAG (Directed Acyclic Graph) implements the pipeline logic, including **branching logic** on the need to either create a dataset or update an existing one and handles cloud connections, such as **reading and uploading to an S3 bucket**.
 Not only the CSV files are handled, but the JSON dataset metadata file, with info on the characteristics of the data, are also updated.
 
+**OBS: Airflow project was created using the [AirflowCTL](https://github.com/kaxil/airflowctl) command line tool**
+
 **Airflow DAG architecture**
 
 ![](airflow_dag.png)
@@ -144,6 +146,9 @@ Esta classe usa as funções acima para **coordenar a extração de Dataframes d
 
 Este DAG (Directed Acyclic Graph) implementa a lógica da pipeline, incluindo **lógica de ramificação** sobre a necessidade de criar um dataset ou atualizar um existente e lida com conexões na nuvem, como **leitura e upload para um bucket S3**.
 Não apenas os arquivos CSV são atualizados, mas também o arquivo JSON de metadados do dataset é modificado para refletir o novo dataset.
+
+**OBS: O projeto do Airflow foi criado usando a ferramenta de linha de comando [AirflowCTL](https://github.com/kaxil/airflowctl)**
+
 
 **Arquitetura DAG do Airflow**
 
