@@ -19,11 +19,11 @@ All that in slices of 5 minutes of data each.
 
 ## Acessing the data 
 
-* Dataset statistics (preview of the CSV and info like how many rows are there in file and how many hours are covered) can be acessed [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
+* Dataset statistics (preview of the CSV and info like how many rows are there in file and how many hours are covered) can be acessed  [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
 
-* Bitcoin dataset can be downloaded [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
+* Bitcoin dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
-* Ethereum dataset can be downloaded [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=eth)
+* Ethereum dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=eth)
 
 All data and metadata is stored on **AWS S3** and links lead to a temporary URL where you can download certain files
 
