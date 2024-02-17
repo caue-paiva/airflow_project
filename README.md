@@ -19,9 +19,9 @@ All that in slices of 5 minutes of data each.
 
 ## Accessing the data 
 
-* A graph of the Bitcoin dataset, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
+* A **plot of the Bitcoin dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
 
-* A graph of the Ethereum dataset, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
+* A **plot of the Ethereum dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
 
 * Bitcoin dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
@@ -122,10 +122,10 @@ Tudo isso em periódos de 5 minutos de dados cada.
 
 ## Acessando os dados
 
-* Gráfico de dados do Bitcoin, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
+* **Gráfico de dados do Bitcoin**, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
 está disponível [aqui](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
 
-* Gráfico de dados do Ethereum, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
+* **Gráfico de dados do Ethereum**, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
 está disponível [aqui](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
 
 * O dataset do Bitcoin pode ser baixado [aqui](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
