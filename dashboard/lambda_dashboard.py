@@ -1,6 +1,11 @@
 import json , boto3 , csv 
 from io import StringIO
 
+"""
+Code used on an AWS lambda function to return a semi-static HTML page with a preview of the dataset of certain crypto tokens
+as well as general stats about that dataset
+"""
+
 def csv_string_to_html_table(csv_string:str, max_rows:int = 300)->str:
     csvfile = StringIO(csv_string)
     reader = csv.reader(csvfile)
