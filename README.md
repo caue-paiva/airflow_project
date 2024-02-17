@@ -2,7 +2,7 @@
 
 :us:
 
-This project aims to **collect and update data on Crypto Tokens like like Bitcoin and Ethereum** (in the future also Solana) in the form of CSV files covering large periods of trading data collected from the [Binance US API](https://docs.binance.us/#introduction).
+This project aims to **collect and update data on Crypto Tokens like Bitcoin and Ethereum** (in the future also Solana) in the form of CSV files covering large periods of trading data collected from the [Binance US API](https://docs.binance.us/#introduction).
 
 Data collected includes: 
 
