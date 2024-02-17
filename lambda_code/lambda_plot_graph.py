@@ -29,10 +29,20 @@ def create_subplots_from_csv_string(csv_string:str, token :str ,max_rows: int =1
         line_count += 1
     
     #make the 2 subplots of the graph, one with Token value x time and another with token trade net-flow x time
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, subplot_titles=('Token Price Over Time', 'Token Net Flow Over Time'))
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1,
+                        subplot_titles=('Token Price Over Time', 'Token Net Flow Over Time'))
     fig.add_trace(go.Scatter(x=dates, y=token_prices, mode='lines+markers', name='Token Price'), row=1, col=1)
     fig.add_trace(go.Scatter(x=dates, y=token_net_flows, mode='lines+markers', name='Token Net Flow'), row=2, col=1)
+     
+    COLORS = ['darkblue', 'lightblue']
     
+    #create dotted dark blue lines across both subplots for ease of comparison
+    for i, date in enumerate(dates):
+        if i % 10 != 0:
+            continue 
+        color = COLORS[i % len(COLORS)]
+        fig.add_vline(x=date, line_width=1, line_dash="dash", line_color=color, row='all')
+
     return fig
 
 def lambda_handler(event, context):
