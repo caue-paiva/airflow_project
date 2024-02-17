@@ -19,7 +19,9 @@ All that in slices of 5 minutes of data each.
 
 ## Accessing the data 
 
-* Dataset statistics (preview of the CSV and info like how many rows are there in the file and how many hours are covered) can be accessed  [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
+* A graph of the Bitcoin dataset, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
+
+* A graph of the Ethereum dataset, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
 
 * Bitcoin dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
@@ -120,7 +122,11 @@ Tudo isso em periódos de 5 minutos de dados cada.
 
 ## Acessando os dados
 
-* Estatísticas do dataset (prévia do CSV e informações como quantas linhas há no arquivo e quantas horas são cobertas no dataset) podem ser acessadas [aqui](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
+* Gráfico de dados do Bitcoin, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
+está disponível [aqui](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
+
+* Gráfico de dados do Ethereum, mostrando preço do Token e saldo líquido de vendas/compras do ativo em função da data 
+está disponível [aqui](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
 
 * O dataset do Bitcoin pode ser baixado [aqui](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
