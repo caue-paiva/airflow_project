@@ -12,20 +12,19 @@ html_template = """
 <head>
     <title>Dashboard</title>
     <style>
-        /* Style to make the DataFrame divs scrollable */
+        
         .dataset-div {{
-            display: block; /* Initially hide divs */
-            height: 67vh; /* Set a fixed height for the divs */
-            overflow: auto; /* Enable scrolling within the div */
+            display: block; 
+            height: 67vh; 
+            overflow: auto; 
         }}
         
-        /* Make the first DataFrame div visible by default */
         #btc {{
             display: block;
         }}
 
         .content {{
-         display: none; /* Initially hide divs */
+         display: none; 
         }}
 
         body {{
@@ -43,7 +42,7 @@ html_template = """
             padding: 8px;
         }}
         th {{
-             background-color: #e7f2f8; /* Soft blue hue */
+             background-color: #e7f2f8; /* soft blue*/
              color: #333;
         }}
         tr:nth-child(even) {{
@@ -51,7 +50,7 @@ html_template = """
         }}
 
         tr:nth-child(odd) {{
-              background-color: #e7f2f8; /* Soft blue hue for odd rows, if desired */
+              background-color: #e7f2f8; /*soft blue */
         }}
 
         .stats-div {{
@@ -62,11 +61,10 @@ html_template = """
         .bullet-point {{
             background-color: #e7f2f8; 
             padding: 13px;
-            border-radius: 5px; /* Optional: for rounded corners */
-            list-style-type: none; /* This will remove the bullet points */
-            margin: 0; /* Removes the default margin */
-            font-size: 19px; /* Sets the font size to 20px */
-           
+            border-radius: 5px; 
+            list-style-type: none; 
+            margin: 0;
+            font-size: 19px; 
         }}
 
         #bold-point {{
