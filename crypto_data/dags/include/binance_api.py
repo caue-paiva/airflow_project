@@ -1,6 +1,10 @@
 import requests , math, time
 from typing import Union,Optional
 
+"""
+Functions for getting data from the Binance US API
+"""
+
 def __op_is_sell(transaction:dict)->Optional[bool]: 
      """
      #Sell Operation ("m" is true): The trade represents selling BTC for USDT.   

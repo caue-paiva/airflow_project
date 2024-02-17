@@ -5,10 +5,15 @@ from datetime import datetime , timedelta
 from typing import Union, Optional
 
 """
+Class for coordinating the extraction of Pandas Dataframes out of data collected from binance API
+Can be used to create datasets from nothing or update existing datasets
+
+Implements error handling and chunking the dataset for re-trying in case extraction fails in some
+step of the process
+
+
 1 hour of processing can get around 104 hours of data
-
 max time back of 2,75 years should take around 230 hours to complete (almost 10 days)
-
 max time of 1.5 years should take 126 hours to complete (5.2 days)
 """
 
