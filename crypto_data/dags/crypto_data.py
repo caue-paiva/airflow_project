@@ -8,15 +8,17 @@ from airflow.io.path import ObjectStoragePath
 from typing import  Optional
 
 """
-Pay closer attention to the schedule of the DAG and whether it will clash with the hours per daily update, figure it out
-also look what happens in edge cases where the daily update is 12h but the dataset is missing only like 11 hours 
+Main DAG for the Crypto Data ETL pipeline, it creates an instance of the CryptoDataETL class and uses it to create/update 
+Pandas dataframes extracted and saved in S3 buckets.
+
+
 
 Stats for extraction speed:
 
 Rows per min: ~187 
-
-
 """
+# Variable.get() retrieves airflow env variables set in the Airflow UI and is used to make the project more modular
+
 SUPPORTED_TOKENS: set[str] = {"BTC", "SOL", "ETH"}
 DATASET_METADATA_FILENAME = Variable.get("DATASET_METADATA_NAME")
 CUR_DIR_PATH: str = os.getcwd()  #for some reason when airflow executes this returns the value to the folder containing the airflow project
@@ -37,8 +39,8 @@ def save_metadata_locally(metadata_json:list[dict])->bool:
      catchup = False, # catchup = True will make your dags execute automatically to make up for any missed runs, better to leave this option as False to avoid problems
 )                     
 def crypto_data_etl()->None:
-    TOKEN = "BTC" #find a way to enable multiple tokens maybe?
-    etl = CryptoDataETL(
+    TOKEN = "BTC" 
+    etl = CryptoDataETL( #instantiating ETL class 
         crypto_token = TOKEN,
         max_time_frame_hours=  float(Variable.get("MAX_TIME_FRAME_HOURS")),
         hours_between_daily_updates= int(Variable.get("HOURS_BETWEEN_DAILY_UPDATES")),
@@ -148,6 +150,7 @@ def crypto_data_etl()->None:
     path_branch >> update_dataset >> write_from_existing
     
 crypto_data_etl()
+
 
 """
 Testing: 

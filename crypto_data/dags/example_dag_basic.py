@@ -1,4 +1,8 @@
 import json
+"""
+Example DAG created automatically by AirflowCTL tool
+
+"""
 
 from airflow.decorators import (
     dag,

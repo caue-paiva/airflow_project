@@ -327,23 +327,3 @@ class CryptoDataETL():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-"""max_time_frame_hours = 3   #how far back will data be collected in hours, equivalent to 2,75 years 
-    mins_per_row = 5 #how many minutes of data does each column represent
-    trade_api_time_interval = 100000 #in ms, the time window for getting aggregated transaction data
-    data_chunk_num_rows = 10000 #how many rows of data are stored in each chunk of the dataframe, 10k rows means each chunk covers 834 hours
-    max_row_num:int  = math.ceil((max_time_frame_hours * 60)/mins_per_row) #max number of rows for the CSV
-"""
-        
-
