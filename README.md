@@ -1,4 +1,4 @@
-## Crypto Data ETL pipeline with Airflow and AWS 
+# Crypto Data ETL pipeline with Airflow and AWS 
 
 :us:
 
@@ -17,7 +17,7 @@ Data collected includes:
 All that in slices of 5 minutes of data each.
 
 
-# Acessing the data 
+## Acessing the data 
 
 * Dataset statistics (preview of the CSV and info like how many rows are there in file and how many hours are covered) can be acessed [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/stage1/dashboard)
 
@@ -28,7 +28,7 @@ All that in slices of 5 minutes of data each.
 All data and metadata is stored on **AWS S3** and links lead to a temporary URL where you can download certain files
 
 
-# Architecture of the application 
+## Architecture of the application 
 
 ![](architecture.png)
 
