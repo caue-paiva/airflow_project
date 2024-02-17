@@ -1,5 +1,11 @@
 import json , boto3
 
+"""
+Lambda code that returns an S3 file download URL and redirects users 
+to it so they can download the dataset CSV file of the assocated token.
+
+"""
+
 def return_error(err_msg:str)->dict:
     return {
         'statusCode': 500, 
