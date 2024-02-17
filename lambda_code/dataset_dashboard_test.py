@@ -5,7 +5,6 @@ Code for Testing the creating of a simple-front end with HTML/CSS and minimal JS
 statistics  
 """
 
-
 html_template = """
 <!DOCTYPE html>
 <html>
