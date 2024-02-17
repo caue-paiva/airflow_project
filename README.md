@@ -28,7 +28,7 @@ All that in slices of 5 minutes of data each.
 All data and metadata is stored on **AWS S3** and links lead to a temporary URL where you can download certain files
 
 
-## Architecture of the application 
+## Architecture of the project
 
 ![](architecture.png)
 
