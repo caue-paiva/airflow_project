@@ -1,4 +1,4 @@
-## Crypto Data ETL project with Airflow and AWS 
+## Crypto Data ETL pipeline with Airflow and AWS 
 
 :us:
 
@@ -53,4 +53,4 @@ Not only the CSV files are handled, but the JSON dataset metadata file, with inf
 
 **Airflow DAG architecture**
 
-![](architecture_diagram.png)
+![](airflow_dag.png)
