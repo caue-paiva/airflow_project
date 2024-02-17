@@ -33,7 +33,7 @@ All data and metadata is stored on **AWS S3** and links lead to a temporary URL 
 
 # Architecture of the application 
 
-![](architecture_diagram.png)
+![](architecture.png)
 
 
 There are 3 main scripts running on this application:
