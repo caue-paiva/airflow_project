@@ -5,7 +5,7 @@ Code for Testing the creating of a simple-front end with HTML/CSS and minimal JS
 statistics  
 """
 
-# Sample data for bar charts
+
 html_template = """
 <!DOCTYPE html>
 <html>
@@ -129,21 +129,12 @@ function showFigure(datasetId) {{
 </html>
 """
 
-
-# Replace 'your_file1.csv' and 'your_file2.csv' with the actual paths to your CSV files
 csv_file1 = '/home/kap/airflow_test/BTC_DATA (5) copy.csv'
 csv_file2 = '/home/kap/airflow_test/BTC_DATA (5).csv'
 
 categories_set = ['Rows in Dataset', 'Hours in Dataset', 'Oldest Date covered', 'Latest Date covered']
 values_set_1 = [20, 34, 30, 16]
 values_set_2 = [15, 29, 22, 31]
-
-
-# Read the CSV files into Pandas DataFrames
-
-# Function to create a Plotly bar chart figure
-
-# Function to create a Plotly table figure
 
 def csv_to_html_table(csv_filepath):
     with open(csv_filepath, newline='') as csvfile:
