@@ -33,4 +33,4 @@ All data and metadata is stored on **AWS S3** and links lead to a temporary URL 
 
 # Architecture of the application 
 
-![](https://app.eraser.io/workspace/b6Neltg8ZdQ1UZEq4Pxu?origin=share)
+![a](architecture_diagram.png)
