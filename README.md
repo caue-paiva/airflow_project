@@ -57,39 +57,39 @@ Not only the CSV files are handled, but the JSON dataset metadata file, with inf
 
 **To run the project locally on Linux:**
 
-# 1) create empty folder
+## 1) create empty folder
 
-# 2) copy file "local_setup.bash" from repo folder project_setup/ to created folder
+## 2) copy file "local_setup.bash" from repo folder project_setup/ to created folder
 
-# 3)change file variables $USER and $HOME_ to current terminal user and path to created folder
+## 3)change file variables $USER and $HOME_ to current terminal user and path to created folder
 
-# 4) run bash files:
+## 4) run bash files:
 ```bash
 bash local_setup.bash
 ```
 
-# 5) Follow instructions on file to add AWS connections to Airflow with AWS acess ID and secret acess keys 
+## 5) Follow instructions on file to add AWS connections to Airflow with AWS acess ID and secret acess keys 
 This is to be done manually due to security reasons related to the AWS account and services
 
-# 6) To acess Airflow UI just connect to Localhost 8080
+## 6) To acess Airflow UI just connect to Localhost 8080
 
 
 **To run the project on EC2 instances:**
 
-# 1) create an EC2 instance, choose model with at least 2gb of RAM
+## 1) create an EC2 instance, choose model with at least 2gb of RAM
 
-# 1.1) Either during creating of after, open a custom TCP connection with all traffic allowed on port 8080 (for connecting to airflow UI)
+## 1.1) Either during creating of after, open a custom TCP connection with all traffic allowed on port 8080 (for connecting to airflow UI)
 
-# 1.2) Edit the "user-data" config on the EC2 instance and copy and paste the "vm_setup.bash" file from the project_setup/ foler on the "user-data" space.
+## 1.2) Edit the "user-data" config on the EC2 instance and copy and paste the "vm_setup.bash" file from the project_setup/ foler on the "user-data" space.
 
-# 2) Launch instance
+## 2) Launch instance
 
-# 3) Wait for a bit and see if installation and start of the airflow project was sucessful
+## 3) Wait for a bit and see if installation and start of the airflow project was sucessful
 
 # 4) Follow instructions on file to add AWS connections to Airflow with AWS acess ID and secret acess keys 
 This is to be done manually due to security reasons related to the AWS account and services
 
-# 5) To acess Airflow UI just connect to the DNS URL of the Instance on port 8080 (something like {url}:8080 )
+## 5) To acess Airflow UI just connect to the DNS URL of the Instance on port 8080 (something like {url}:8080 )
 
 
 
