@@ -6,13 +6,13 @@ This project aims to **collect and update data on Crypto Tokens like like Bitcoi
 
 Data collected includes: 
 
-* Token price,
+* **Token price**
 
-* Tokens Bought and sold
+* **Tokens Bought and sold**
 
-* Num. of aggregate transactions (transactions of the same token and same price are aggregated together)
+* **Num. of aggregate transactions** (transactions of the same token and same price are aggregated together)
 
-* Net flow for the asset in a period
+* **Net flow for the asset in a certain period**
 
 All that in slices of 5 minutes of data each.
 
