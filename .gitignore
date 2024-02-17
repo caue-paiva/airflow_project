@@ -5,3 +5,8 @@ debug.csv
 dashboard_env
 dashboard/plotly_output.html
 dashboard/plotly_output2.html
+BTC_DATA (5).csv
+BTC_DATA (5) copy.csv
+*.html
+dashboard/lambda_layer
+layer.zip

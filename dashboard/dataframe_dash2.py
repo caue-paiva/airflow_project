@@ -1,5 +1,10 @@
 import csv 
 
+"""
+Code for Testing the creating of a simple-front end with HTML/CSS and minimal JS for displaying part of the dataset and its
+statistics  
+"""
+
 # Sample data for bar charts
 html_template = """
 <!DOCTYPE html>
