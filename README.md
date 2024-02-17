@@ -38,15 +38,15 @@ All data and metadata is stored on **AWS S3** and links lead to a temporary URL 
 
 There are 3 main scripts running on this application:
 
-* Binance API functions (../crypto_data/dags/include/binance_api.py)
+# Binance API functions (../crypto_data/dags/include/binance_api.py)
 
 These are functions that get **data from the binance API**, like Crypto Token price, amount of transactions and returns the data.
 
-* CryptoDataETL class (../crypto_data/dags/include/crypto_data_etl.py)
+# CryptoDataETL class (../crypto_data/dags/include/crypto_data_etl.py)
 
 This class uses the above functions to **coordinate the extraction of pandas dataframes out of the API data**, with parameters such as Max hours of data that the dataset can have, how many mins should be covered by each rows among others. This function provides 2 main public interfaces, **one function for creating a dataset** from scratch and one for **updating an existing dataset** with more and/or newer data.
 
-* Airflow DAG for orchestrating the ETL pipeline (../crypto_data/dags/crypto_data.py)
+# Airflow DAG for orchestrating the ETL pipeline (../crypto_data/dags/crypto_data.py)
 
 This dag implements the pipeline logic, including **branching logic** on the need to either create a dataset or update and existing one and handles cloud connections, such as **reading and uploading to an S3 bucket**.
 Not only the CSV files are handled, but the JSON dataset metadata file, with info on the characteristics of the data, are also updated.
