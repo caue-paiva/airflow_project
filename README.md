@@ -55,7 +55,7 @@ Not only the CSV files are handled, but the JSON dataset metadata file, with inf
 
 ## Setting up the project
 
-**To run the project locally on Linux:**
+### To run the project locally on Linux:
 
 **1) create empty folder**
 
@@ -74,7 +74,7 @@ This is to be done manually due to security reasons related to the AWS account a
 **6) To acess Airflow UI just connect to Localhost 8080**
 
 
-**To run the project on EC2 instances:**
+### To run the project on EC2 instances:
 
 **1) create an EC2 instance, choose model with at least 2gb of RAM**
 
