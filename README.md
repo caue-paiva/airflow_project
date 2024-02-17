@@ -19,9 +19,9 @@ All that in slices of 5 minutes of data each.
 
 ## Accessing the data 
 
-* A **plot of the Bitcoin dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
+* **A plot of the Bitcoin dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=btc)
 
-* A **plot of the Ethereum dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
+* **A plot of the Ethereum dataset**, with Token value and trading net-flow (bought x sold coins) as a function of date is available [here](https://jr6cd1g42j.execute-api.us-east-2.amazonaws.com/graph?token=eth)
 
 * Bitcoin dataset can be downloaded  [here](https://czmejpeff7.execute-api.us-east-2.amazonaws.com/geturl?token=btc)
 
